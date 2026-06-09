@@ -93,4 +93,13 @@ export const api = {
     body?: unknown,
     options?: Omit<RequestOptions, "method" | "body">,
   ) => apiRequest<T>(`${API_V1_PREFIX}${path}`, { ...options, method: "POST", body }),
+
+  patch: <T>(
+    path: string,
+    body?: unknown,
+    options?: Omit<RequestOptions, "method" | "body">,
+  ) => apiRequest<T>(`${API_V1_PREFIX}${path}`, { ...options, method: "PATCH", body }),
+
+  delete: <T>(path: string, options?: Omit<RequestOptions, "method" | "body">) =>
+    apiRequest<T>(`${API_V1_PREFIX}${path}`, { ...options, method: "DELETE" }),
 };

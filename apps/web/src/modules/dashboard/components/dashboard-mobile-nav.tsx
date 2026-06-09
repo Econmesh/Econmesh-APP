@@ -18,7 +18,7 @@ export function DashboardMobileNav() {
       aria-label="Navegação principal"
     >
       <div className="mx-3 mb-3 rounded-2xl border border-border/80 bg-card/95 shadow-lg backdrop-blur-md supports-[padding:max(0px)]:mb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <div className="grid grid-cols-4 gap-1 p-1.5">
+        <div className="grid grid-cols-5 gap-1 p-1.5">
           {DASHBOARD_NAV_ITEMS.map(({ href, shortLabel, icon: Icon }) => {
             const active = isDashboardNavActive(pathname, href);
 

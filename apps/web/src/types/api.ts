@@ -45,3 +45,68 @@ export interface MessageResponse {
   message: string;
   data?: Record<string, unknown> | null;
 }
+
+export interface CompanyAddress {
+  postal_code?: string | null;
+  street?: string | null;
+  number?: string | null;
+  complement?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+  state?: string | null;
+}
+
+export interface Company {
+  id: string;
+  owner_user_id: string;
+  legal_name: string;
+  trade_name?: string | null;
+  tax_id: string;
+  email?: string | null;
+  phone?: string | null;
+  address?: CompanyAddress | null;
+  country: string;
+  website?: string | null;
+  description?: string | null;
+  logo_storage_key?: string | null;
+  logo_url?: string | null;
+  sector?: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CompanyCreatePayload {
+  legal_name: string;
+  trade_name?: string | null;
+  tax_id: string;
+  email?: string | null;
+  phone?: string | null;
+  address?: CompanyAddress | null;
+  country?: string;
+  website?: string | null;
+  description?: string | null;
+  logo_storage_key?: string | null;
+  logo_url?: string | null;
+  sector?: string | null;
+}
+
+export interface CompanyUpdatePayload {
+  legal_name?: string;
+  trade_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: CompanyAddress | null;
+  website?: string | null;
+  description?: string | null;
+  logo_storage_key?: string | null;
+  logo_url?: string | null;
+  sector?: string | null;
+}
+
+export interface LogoPresignResponse {
+  upload_url: string;
+  storage_key: string;
+  public_url: string;
+  expires_at: string;
+}

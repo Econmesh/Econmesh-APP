@@ -1,4 +1,5 @@
 import {
+  Building2,
   Handshake,
   Headphones,
   LayoutDashboard,
@@ -15,6 +16,12 @@ export type DashboardNavItem = {
 
 export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
   { href: "/dashboard", label: "Dashboard", shortLabel: "Início", icon: LayoutDashboard },
+  {
+    href: "/dashboard/empresas",
+    label: "Empresas",
+    shortLabel: "Empresas",
+    icon: Building2,
+  },
   {
     href: "/dashboard/oportunidades",
     label: "Oportunidades",
