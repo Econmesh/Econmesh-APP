@@ -1,28 +1,46 @@
 "use client";
+
+import { Button } from "@econmesh-app/ui/components/button";
+import { Shield } from "lucide-react";
 import Link from "next/link";
 
+import { useAuth } from "@/hooks/use-auth";
 import { ModeToggle } from "./mode-toggle";
+import { Logo } from "./brand/logo";
 
 export default function Header() {
-  const links = [{ to: "/", label: "Home" }] as const;
+  const { isAuthenticated, isLoading } = useAuth();
 
   return (
-    <div>
-      <div className="flex flex-row items-center justify-between px-2 py-1">
-        <nav className="flex gap-4 text-lg">
-          {links.map(({ to, label }) => {
-            return (
-              <Link key={to} href={to}>
-                {label}
+    <header className="border-b border-border/80 bg-card/30 backdrop-blur-md">
+      <div className="container mx-auto flex flex-row items-center justify-between px-4 py-3">
+        
+          <Logo />
+       
+        <nav className="flex items-center gap-3" aria-label="Principal">
+          <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
+            Início
+          </Link>
+          {!isLoading && isAuthenticated ? (
+            <Link href="/dashboard">
+              <Button size="sm">Dashboard</Button>
+            </Link>
+          ) : !isLoading ? (
+            <>
+              <Link
+                href="/login"
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                Entrar
               </Link>
-            );
-          })}
-        </nav>
-        <div className="flex items-center gap-2">
+              <Link href="/register">
+                <Button size="sm">Cadastrar</Button>
+              </Link>
+            </>
+          ) : null}
           <ModeToggle />
-        </div>
+        </nav>
       </div>
-      <hr />
-    </div>
+    </header>
   );
 }
