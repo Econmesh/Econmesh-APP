@@ -25,7 +25,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (isAuthRoute(pathname) && hasSession && pathname !== "/verify-email") {
+  if (
+    isAuthRoute(pathname) &&
+    hasSession &&
+    pathname !== "/verify-email" &&
+    pathname !== "/verify"
+  ) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
@@ -39,6 +44,7 @@ export const config = {
     "/settings/:path*",
     "/login",
     "/register",
+    "/verify",
     "/verify-email",
     "/forgot-password",
     "/reset-password",

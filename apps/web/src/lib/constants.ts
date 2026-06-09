@@ -5,6 +5,7 @@ export const PENDING_EMAIL_KEY = "econmesh_pending_email";
 export const PUBLIC_ROUTES = [
   "/login",
   "/register",
+  "/verify",
   "/verify-email",
   "/forgot-password",
   "/reset-password",
