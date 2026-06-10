@@ -110,3 +110,50 @@ export interface LogoPresignResponse {
   public_url: string;
   expires_at: string;
 }
+
+export interface ProfileAddress {
+  postal_code?: string | null;
+  street?: string | null;
+  number?: string | null;
+  complement?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+  state?: string | null;
+}
+
+export interface UserProfile {
+  id: string;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  picture: string | null;
+  picture_storage_key: string | null;
+  cpf: string | null;
+  birth_date: string | null;
+  job_title: string | null;
+  address: ProfileAddress | null;
+  country: string;
+  is_complete: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserProfileUpdatePayload {
+  name?: string;
+  email?: string | null;
+  phone?: string | null;
+  cpf?: string | null;
+  birth_date?: string | null;
+  job_title?: string | null;
+  address?: ProfileAddress | null;
+  country?: string;
+  picture_storage_key?: string | null;
+  picture_url?: string | null;
+}
+
+export interface AvatarPresignResponse {
+  upload_url: string;
+  storage_key: string;
+  public_url: string;
+  expires_at: string;
+}

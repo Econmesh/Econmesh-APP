@@ -10,6 +10,7 @@ import {
   DASHBOARD_NAV_ITEMS,
   isDashboardNavActive,
 } from "../constants/nav-items";
+import { Logo } from "@/components/brand/logo";
 
 export function DashboardSidebar() {
   const pathname = usePathname();
@@ -25,7 +26,7 @@ export function DashboardSidebar() {
     >
       <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-3">
         {!collapsed ? (
-          <span className="truncate text-sm font-semibold tracking-tight">Econmesh</span>
+          <Logo />
         ) : null}
         <button
           type="button"
