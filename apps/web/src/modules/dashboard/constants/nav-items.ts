@@ -6,9 +6,10 @@ import {
   Target,
   type LucideIcon,
 } from "lucide-react";
+import type { Route } from "next";
 
 export type DashboardNavItem = {
-  href: string;
+  href: Route;
   label: string;
   shortLabel: string;
   icon: LucideIcon;
@@ -32,7 +33,7 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
   { href: "/dashboard/suporte", label: "Suporte", shortLabel: "Suporte", icon: Headphones },
 ];
 
-export function isDashboardNavActive(pathname: string, href: string): boolean {
+export function isDashboardNavActive(pathname: string, href: Route): boolean {
   if (href === "/dashboard") {
     return pathname === href;
   }

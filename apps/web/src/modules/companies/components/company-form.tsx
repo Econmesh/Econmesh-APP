@@ -21,7 +21,7 @@ import {
   type CompanyFormValues,
 } from "@/modules/companies/schemas";
 import { companiesService } from "@/services/companies/companies.service";
-import type { Company } from "@/types/api";
+import type { Company, CompanyCreatePayload, CompanyUpdatePayload } from "@/types/api";
 import { ApiError, getValidationFieldErrors } from "@/utils/errors";
 
 const BRAZILIAN_STATES = [
@@ -30,15 +30,19 @@ const BRAZILIAN_STATES = [
   "RS", "RO", "RR", "SC", "SP", "SE", "TO",
 ] as const;
 
-type CompanyFormProps = {
-  mode: "create" | "edit";
-  initialData?: Company;
-  onSubmit: (payload: Record<string, unknown> & {
-    logo_storage_key?: string | null;
-    logo_url?: string | null;
-  }) => Promise<void>;
-  submitLabel: string;
-};
+type CompanyFormProps =
+  | {
+      mode: "create";
+      initialData?: never;
+      onSubmit: (payload: CompanyCreatePayload) => Promise<void>;
+      submitLabel: string;
+    }
+  | {
+      mode: "edit";
+      initialData: Company;
+      onSubmit: (payload: CompanyUpdatePayload) => Promise<void>;
+      submitLabel: string;
+    };
 
 function companyToFormValues(company: Company): CompanyFormValues {
   return {
@@ -181,15 +185,19 @@ export function CompanyForm({ mode, initialData, onSubmit, submitLabel }: Compan
 
     setLoading(true);
     try {
-      const payload =
-        mode === "create"
-          ? normalizeCompanyPayload(formValues)
-          : normalizeCompanyUpdatePayload(formValues);
-      await onSubmit({
-        ...payload,
-        logo_storage_key: logoStorageKey,
-        logo_url: logoUrl,
-      });
+      if (mode === "create") {
+        await onSubmit({
+          ...normalizeCompanyPayload(formValues),
+          logo_storage_key: logoStorageKey,
+          logo_url: logoUrl,
+        });
+      } else {
+        await onSubmit({
+          ...normalizeCompanyUpdatePayload(formValues),
+          logo_storage_key: logoStorageKey,
+          logo_url: logoUrl,
+        });
+      }
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.code === "validation_error") {

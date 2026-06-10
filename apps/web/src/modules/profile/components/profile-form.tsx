@@ -165,7 +165,7 @@ export function ProfileForm({
       });
     } catch (error) {
       if (error instanceof ApiError) {
-        const fieldErrors = getValidationFieldErrors(error);
+        const fieldErrors = getValidationFieldErrors(error.details);
         if (Object.keys(fieldErrors).length > 0) {
           setErrors(fieldErrors);
           return;
