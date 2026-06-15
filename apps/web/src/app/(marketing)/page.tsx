@@ -23,14 +23,10 @@ export default function HomePage() {
         <div>
           <div className="mb-4 flex items-center gap-2 text-primary">
             
-            <span className="text-sm font-semibold uppercase tracking-widest">
-              Infraestrutura &amp; Cibersegurança
-            </span>
           </div>
           <h1 className="text-4xl font-bold tracking-tight md:text-5xl">Econmesh</h1>
           <p className="mt-4 max-w-xl text-lg text-muted-foreground">
-            Plataforma para gestão de oportunidades, acordos e operações com autenticação
-            integrada Firebase + API.
+           Para uso exlusivo do desenvolvimento, Módulo em construção.
           </p>
         </div>
         <div className="flex flex-wrap gap-3">

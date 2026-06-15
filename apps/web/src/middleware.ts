@@ -19,6 +19,11 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hasSession = request.cookies.has(AUTH_COOKIE_NAME);
 
+  if (pathname === "/") {
+    const destination = hasSession ? "/dashboard" : "/login";
+    return NextResponse.redirect(new URL(destination, request.url));
+  }
+
   if (isProtected(pathname) && !hasSession) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
@@ -39,6 +44,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
     "/dashboard/:path*",
     "/profile/:path*",
     "/settings/:path*",

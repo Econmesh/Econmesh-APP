@@ -23,13 +23,13 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
         <p className="mt-1 text-muted-foreground">
-          Área autenticada — pronta para módulos futuros.
+          Área autenticada, Módulo em construção.
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Sua conta</CardTitle>
+          <CardTitle>Sua conta(para uso exclusivo do desenvolvimento)</CardTitle>
           <CardDescription>Dados sincronizados com a API Econmesh</CardDescription>
         </CardHeader>
         <CardContent>

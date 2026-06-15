@@ -157,3 +157,125 @@ export interface AvatarPresignResponse {
   public_url: string;
   expires_at: string;
 }
+
+export type OpportunityType = "comercializacao" | "simbiose_industrial" | "compartilhamento";
+
+export type OfferDemand = "gerador" | "receptor";
+
+export type OpportunityPeriodicity = "continua" | "esporadica";
+
+export type OpportunitySort =
+  | "newest"
+  | "oldest"
+  | "price_asc"
+  | "price_desc"
+  | "quantity_desc";
+
+export interface OpportunityImage {
+  storage_key: string;
+  url: string;
+  is_primary: boolean;
+  sort_order: number;
+}
+
+export interface Opportunity {
+  id: string;
+  company_id: string;
+  company_name: string;
+  owner_user_id: string;
+  title: string;
+  description: string;
+  opportunity_type: OpportunityType;
+  offer_demand: OfferDemand;
+  category: string;
+  technical_detail: string;
+  purity_percent: number | null;
+  physical_state: string;
+  periodicity: OpportunityPeriodicity;
+  quantity: number;
+  unit: string;
+  price: number | null;
+  price_negotiable: boolean;
+  city: string;
+  state: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  images: OpportunityImage[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OpportunityListParams {
+  page?: number;
+  page_size?: number;
+  q?: string;
+  opportunity_type?: OpportunityType;
+  offer_demand?: OfferDemand;
+  category?: string;
+  state?: string;
+  city?: string;
+  periodicity?: OpportunityPeriodicity;
+  price_min?: number;
+  price_max?: number;
+  quantity_min?: number;
+  quantity_max?: number;
+  sort?: OpportunitySort;
+}
+
+export interface OpportunityListResponse {
+  items: Opportunity[];
+  total: number;
+  page: number;
+  page_size: number;
+  has_more: boolean;
+}
+
+export interface OpportunityCreatePayload {
+  company_id: string;
+  title: string;
+  description: string;
+  opportunity_type: OpportunityType;
+  offer_demand: OfferDemand;
+  category: string;
+  technical_detail: string;
+  purity_percent?: number | null;
+  physical_state: string;
+  periodicity: OpportunityPeriodicity;
+  quantity: number;
+  unit: string;
+  price?: number | null;
+  price_negotiable: boolean;
+  city: string;
+  state: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  images: OpportunityImage[];
+}
+
+export interface OpportunityUpdatePayload {
+  title?: string;
+  description?: string;
+  opportunity_type?: OpportunityType;
+  offer_demand?: OfferDemand;
+  category?: string;
+  technical_detail?: string;
+  purity_percent?: number | null;
+  physical_state?: string;
+  periodicity?: OpportunityPeriodicity;
+  quantity?: number;
+  unit?: string;
+  price?: number | null;
+  price_negotiable?: boolean;
+  city?: string;
+  state?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  images?: OpportunityImage[];
+}
+
+export interface OpportunityImagePresignResponse {
+  upload_url: string;
+  storage_key: string;
+  public_url: string;
+  expires_at: string;
+}
