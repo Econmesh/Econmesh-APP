@@ -1,6 +1,5 @@
 import { OPPORTUNITY_LIST_PAGE_SIZE } from "@/modules/opportunities/constants";
 import { api } from "@/services/api/client";
-import { opportunitiesMockService } from "@/services/opportunities/opportunities.mock";
 import type {
 	Opportunity,
 	OpportunityCreatePayload,
@@ -10,8 +9,6 @@ import type {
 	OpportunityListResponse,
 	OpportunityUpdatePayload,
 } from "@/types/api";
-
-const USE_MOCK = process.env.NEXT_PUBLIC_OPPORTUNITIES_MOCK !== "false";
 
 function buildQueryString(params: OpportunityListParams): string {
 	const search = new URLSearchParams();
@@ -42,7 +39,7 @@ function buildQueryString(params: OpportunityListParams): string {
 	return search.toString();
 }
 
-const apiService = {
+export const opportunitiesService = {
 	list(params?: OpportunityListParams) {
 		const query = buildQueryString(params ?? {});
 		return api.get<OpportunityListResponse>(`/opportunities?${query}`, {
@@ -98,7 +95,3 @@ const apiService = {
 		};
 	},
 };
-
-export const opportunitiesService = USE_MOCK
-	? opportunitiesMockService
-	: apiService;
