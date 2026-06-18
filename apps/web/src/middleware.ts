@@ -15,6 +15,14 @@ function isAuthRoute(pathname: string): boolean {
   return (PUBLIC_ROUTES as readonly string[]).includes(pathname);
 }
 
+/** Auth pages that must stay reachable even when a session cookie exists. */
+const AUTH_ROUTES_WITH_SESSION = new Set([
+  "/verify-email",
+  "/verify",
+  "/forgot-password",
+  "/reset-password",
+]);
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hasSession = request.cookies.has(AUTH_COOKIE_NAME);
@@ -30,12 +38,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (
-    isAuthRoute(pathname) &&
-    hasSession &&
-    pathname !== "/verify-email" &&
-    pathname !== "/verify"
-  ) {
+  if (isAuthRoute(pathname) && hasSession && !AUTH_ROUTES_WITH_SESSION.has(pathname)) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

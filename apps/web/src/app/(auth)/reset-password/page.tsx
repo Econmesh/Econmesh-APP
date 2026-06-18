@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { signOut } from "firebase/auth";
 import { toast } from "sonner";
 
 import { PageSkeleton } from "@/components/feedback/page-skeleton";
 
 import { AuthShell } from "@/components/auth/auth-shell";
 import { useAuth } from "@/hooks/use-auth";
+import { getFirebaseAuth } from "@/lib/firebase";
 import {
   AuthForm,
   FormField,
@@ -22,8 +24,44 @@ function ResetPasswordContent() {
   const router = useRouter();
   const { resetPassword } = useAuth();
   const oobCode = searchParams.get("oobCode");
+  const mode = searchParams.get("mode");
   const [loading, setLoading] = useState(false);
+  const [verifying, setVerifying] = useState(!!oobCode);
+  const [verifyError, setVerifyError] = useState(false);
+  const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const { errors, setErrors, clear } = useFormErrors<"password" | "password_confirm">();
+
+  const invalidMode = !!mode && mode !== "resetPassword";
+
+  useEffect(() => {
+    if (!oobCode || invalidMode) {
+      setVerifying(false);
+      return;
+    }
+
+    void signOut(getFirebaseAuth());
+    void fetch("/api/auth/session", { method: "DELETE" });
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { verifyPasswordResetCode } = await import("firebase/auth");
+        const email = await verifyPasswordResetCode(getFirebaseAuth(), oobCode);
+        if (!cancelled) setAccountEmail(email);
+      } catch {
+        if (!cancelled) {
+          setVerifyError(true);
+          toast.error("Link inválido ou expirado. Solicite uma nova recuperação de senha.");
+        }
+      } finally {
+        if (!cancelled) setVerifying(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [oobCode, invalidMode]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     clear();
@@ -61,7 +99,7 @@ function ResetPasswordContent() {
     }
   }
 
-  if (!oobCode) {
+  if (invalidMode || !oobCode || verifyError) {
     return (
       <AuthShell title="Link inválido" subtitle="Solicite um novo e-mail de recuperação">
         <p className="text-center text-sm text-muted-foreground">
@@ -73,8 +111,23 @@ function ResetPasswordContent() {
     );
   }
 
+  if (verifying) {
+    return (
+      <AuthShell title="Validando link" subtitle="Aguarde um momento">
+        <PageSkeleton />
+      </AuthShell>
+    );
+  }
+
   return (
-    <AuthShell title="Nova senha" subtitle="Defina uma senha forte para sua conta">
+    <AuthShell
+      title="Nova senha"
+      subtitle={
+        accountEmail
+          ? `Defina uma nova senha para ${accountEmail}`
+          : "Defina uma senha forte para sua conta"
+      }
+    >
       <AuthForm onSubmit={handleSubmit} submitLabel="Salvar senha" loading={loading}>
         <FormField id="password" label="Nova senha" error={errors.password}>
           <FormInput

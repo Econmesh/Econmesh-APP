@@ -20,6 +20,7 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { getPasswordResetActionUrl } from "@/lib/auth-urls";
 import { getFirebaseAuth } from "@/lib/firebase";
 import { authService } from "@/services/auth/auth.service";
 import {
@@ -206,7 +207,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const sendPasswordReset = useCallback(async (email: string) => {
     try {
       await sendPasswordResetEmail(getFirebaseAuth(), email, {
-        url: `${window.location.origin}/reset-password`,
+        url: getPasswordResetActionUrl(),
+        handleCodeInApp: true,
       });
     } catch (error) {
       if (error && typeof error === "object" && "code" in error) {
