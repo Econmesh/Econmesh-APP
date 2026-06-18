@@ -111,6 +111,11 @@ export interface LogoPresignResponse {
   expires_at: string;
 }
 
+export interface StorageUploadResponse {
+  storage_key: string;
+  public_url: string;
+}
+
 export interface ProfileAddress {
   postal_code?: string | null;
   street?: string | null;

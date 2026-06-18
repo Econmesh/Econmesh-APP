@@ -178,9 +178,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }) => {
       const response = await authService.register(payload);
       sessionStorage.setItem("econmesh_pending_email", payload.email);
-      if (response.verification_token) {
-        sessionStorage.setItem("econmesh_dev_verification_token", response.verification_token);
-      }
       return response;
     },
     [],
@@ -198,20 +195,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.replace("/login");
   }, [router]);
 
-  const verifyAccount = useCallback(
-    async (token: string) => {
-      await authService.verify(token);
-      sessionStorage.removeItem("econmesh_dev_verification_token");
-    },
-    [],
-  );
+  const verifyAccount = useCallback(async (token: string) => {
+    await authService.verify(token);
+  }, []);
 
   const resendVerification = useCallback(async (email: string) => {
-    const response = await authService.resendVerification(email);
-    const devToken = response.data?.verification_token;
-    if (typeof devToken === "string") {
-      sessionStorage.setItem("econmesh_dev_verification_token", devToken);
-    }
+    await authService.resendVerification(email);
   }, []);
 
   const sendPasswordReset = useCallback(async (email: string) => {

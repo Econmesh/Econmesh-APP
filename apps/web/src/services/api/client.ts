@@ -84,6 +84,62 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   return payload as T;
 }
 
+export async function apiUploadRequest<T>(
+  path: string,
+  formData: FormData,
+  options: Omit<RequestOptions, "body"> = {},
+): Promise<T> {
+  const { auth = false, skipAuthRedirect = false, headers, ...rest } = options;
+
+  const requestHeaders = new Headers(headers);
+  requestHeaders.set("Accept", "application/json");
+
+  if (auth && tokenProvider) {
+    const token = await tokenProvider();
+    if (token) {
+      requestHeaders.set("Authorization", `Bearer ${token}`);
+    }
+  }
+
+  const response = await fetch(buildUrl(path), {
+    ...rest,
+    method: "POST",
+    headers: requestHeaders,
+    body: formData,
+  });
+
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  const payload = (await response.json().catch(() => null)) as T | ApiErrorBody | null;
+
+  if (!response.ok) {
+    const errorBody: ApiErrorBody =
+      payload && typeof payload === "object" && "code" in payload
+        ? (payload as ApiErrorBody)
+        : {
+            code: "unknown_error",
+            message: response.statusText || "Request failed",
+          };
+
+    if (
+      !skipAuthRedirect &&
+      response.status === 401 &&
+      onUnauthorized &&
+      ["missing_token", "token_expired", "token_revoked", "token_invalid"].includes(
+        errorBody.code,
+      )
+    ) {
+      onUnauthorized();
+    }
+
+    throw new ApiError(response.status, errorBody);
+  }
+
+  return payload as T;
+}
+
 export const api = {
   get: <T>(path: string, options?: Omit<RequestOptions, "method" | "body">) =>
     apiRequest<T>(`${API_V1_PREFIX}${path}`, { ...options, method: "GET" }),
@@ -93,6 +149,12 @@ export const api = {
     body?: unknown,
     options?: Omit<RequestOptions, "method" | "body">,
   ) => apiRequest<T>(`${API_V1_PREFIX}${path}`, { ...options, method: "POST", body }),
+
+  upload: <T>(
+    path: string,
+    formData: FormData,
+    options?: Omit<RequestOptions, "method" | "body">,
+  ) => apiUploadRequest<T>(`${API_V1_PREFIX}${path}`, formData, options),
 
   patch: <T>(
     path: string,

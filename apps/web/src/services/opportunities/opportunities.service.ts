@@ -8,6 +8,7 @@ import type {
 	OpportunityListParams,
 	OpportunityListResponse,
 	OpportunityUpdatePayload,
+	StorageUploadResponse,
 } from "@/types/api";
 
 function buildQueryString(params: OpportunityListParams): string {
@@ -72,24 +73,18 @@ export const opportunitiesService = {
 	},
 
 	async uploadImage(file: File): Promise<OpportunityImage> {
-		const presign = await this.presignImage(
-			file.name,
-			file.type || "application/octet-stream",
+		const formData = new FormData();
+		formData.append("file", file);
+
+		const result = await api.upload<StorageUploadResponse>(
+			"/opportunities/images/upload",
+			formData,
+			{ auth: true },
 		);
 
-		const uploadResponse = await fetch(presign.upload_url, {
-			method: "PUT",
-			body: file,
-			headers: { "Content-Type": file.type || "application/octet-stream" },
-		});
-
-		if (!uploadResponse.ok) {
-			throw new Error("Falha ao enviar a imagem.");
-		}
-
 		return {
-			storage_key: presign.storage_key,
-			url: presign.public_url,
+			storage_key: result.storage_key,
+			url: result.public_url,
 			is_primary: false,
 			sort_order: 0,
 		};

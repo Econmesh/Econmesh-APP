@@ -138,19 +138,10 @@ function VerifyEmailContent() {
   );
 
   useEffect(() => {
-    if (tokenParam) {
-      if (verifyEffectRanRef.current) return;
-      verifyEffectRanRef.current = true;
-      void runVerify(tokenParam);
-      return;
-    }
-
-    const devToken = sessionStorage.getItem("econmesh_dev_verification_token");
-    if (devToken && process.env.NODE_ENV === "development") {
-      if (verifyEffectRanRef.current) return;
-      verifyEffectRanRef.current = true;
-      void runVerify(devToken);
-    }
+    if (!tokenParam) return;
+    if (verifyEffectRanRef.current) return;
+    verifyEffectRanRef.current = true;
+    void runVerify(tokenParam);
   }, [tokenParam, runVerify]);
 
   useEffect(() => {

@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import { FormField, FormInput, useFormErrors } from "@/modules/auth/components/auth-form";
 import { useCepLookup } from "@/modules/companies/hooks/use-cep-lookup";
+import { useAuth } from "@/hooks/use-auth";
 import {
   formatBirthDateForInput,
   formatCep,
@@ -33,6 +34,7 @@ type ProfileFormProps = {
     picture_storage_key?: string | null;
     picture_url?: string | null;
   }) => Promise<void>;
+  onPhotoUpdated?: () => void;
   onCancel?: () => void;
   submitLabel?: string;
 };
@@ -61,9 +63,11 @@ function profileToFormValues(profile: UserProfile): ProfileFormValues {
 export function ProfileForm({
   initialData,
   onSubmit,
+  onPhotoUpdated,
   onCancel,
   submitLabel = "Salvar alterações",
 }: ProfileFormProps) {
+  const { refreshProfile } = useAuth();
   const { errors, setErrors, clear } = useFormErrors<string>();
   const [loading, setLoading] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -132,8 +136,10 @@ export function ProfileForm({
       const uploaded = await profileService.uploadAvatar(file);
       setPhotoStorageKey(uploaded.storage_key);
       setPhotoUrl(uploaded.public_url);
-      setPhotoPreview(URL.createObjectURL(file));
-      toast.success("Foto enviada.");
+      setPhotoPreview(uploaded.public_url);
+      await refreshProfile();
+      onPhotoUpdated?.();
+      toast.success("Foto atualizada.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Falha ao enviar foto.");
     } finally {

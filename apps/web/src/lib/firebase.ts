@@ -10,7 +10,6 @@ function createFirebaseApp(): FirebaseApp {
     projectId: env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
     appId: env.NEXT_PUBLIC_FIREBASE_APP_ID,
     messagingSenderId: env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    storageBucket: env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   };
 
   return getApps().length > 0 ? getApps()[0]! : initializeApp(config);

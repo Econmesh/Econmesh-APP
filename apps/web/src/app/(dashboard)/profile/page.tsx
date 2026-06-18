@@ -100,6 +100,7 @@ export default function ProfilePage() {
         <ProfileForm
           initialData={profile}
           onSubmit={handleSave}
+          onPhotoUpdated={() => void loadProfile()}
           onCancel={() => setEditing(false)}
           submitLabel={profile.is_complete ? "Salvar alterações" : "Completar perfil"}
         />

@@ -11,12 +11,35 @@ import {
   DropdownMenuTrigger,
 } from "@econmesh-app/ui/components/dropdown-menu";
 import { LogOut, Settings, User } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
 import { useAuth } from "@/hooks/use-auth";
 
-function UserAvatar({ name, email }: { name: string | null; email: string | null }) {
+function UserAvatar({
+  name,
+  email,
+  picture,
+}: {
+  name: string | null;
+  email: string | null;
+  picture: string | null;
+}) {
+  if (picture) {
+    return (
+      <span className="relative block size-9 overflow-hidden rounded-full border border-border">
+        <Image
+          src={picture}
+          alt={name ? `Foto de ${name}` : "Foto de perfil"}
+          fill
+          className="object-cover"
+          unoptimized
+        />
+      </span>
+    );
+  }
+
   const initial = (name?.[0] ?? email?.[0] ?? "?").toUpperCase();
   return (
     <span
@@ -47,7 +70,11 @@ export function DashboardHeader() {
             />
           }
         >
-          <UserAvatar name={user?.name ?? null} email={user?.email ?? null} />
+          <UserAvatar
+            name={user?.name ?? null}
+            email={user?.email ?? null}
+            picture={user?.picture ?? null}
+          />
           <div className="hidden text-left sm:block">
             <p className="text-sm font-medium leading-none">{user?.name ?? "Usuário"}</p>
             <p className="mt-0.5 text-xs text-muted-foreground">{user?.email}</p>

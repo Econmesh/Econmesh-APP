@@ -4,6 +4,7 @@ import type {
   CompanyCreatePayload,
   CompanyUpdatePayload,
   LogoPresignResponse,
+  StorageUploadResponse,
 } from "@/types/api";
 
 export const companiesService = {
@@ -40,21 +41,18 @@ export const companiesService = {
   },
 
   async uploadLogo(file: File): Promise<{ storage_key: string; public_url: string }> {
-    const presign = await this.presignLogo(file.name, file.type || "application/octet-stream");
+    const formData = new FormData();
+    formData.append("file", file);
 
-    const uploadResponse = await fetch(presign.upload_url, {
-      method: "PUT",
-      body: file,
-      headers: { "Content-Type": file.type || "application/octet-stream" },
-    });
-
-    if (!uploadResponse.ok) {
-      throw new Error("Falha ao enviar o logotipo.");
-    }
+    const result = await api.upload<StorageUploadResponse>(
+      "/companies/logo/upload",
+      formData,
+      { auth: true },
+    );
 
     return {
-      storage_key: presign.storage_key,
-      public_url: presign.public_url,
+      storage_key: result.storage_key,
+      public_url: result.public_url,
     };
   },
 };
