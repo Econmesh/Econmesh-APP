@@ -284,3 +284,23 @@ export interface OpportunityImagePresignResponse {
   public_url: string;
   expires_at: string;
 }
+
+export interface UserNotification {
+  id: string;
+  title: string;
+  body: string;
+  read_at: string | null;
+  created_at: string;
+  campaign_id?: string | null;
+}
+
+export interface UserNotificationListResponse {
+  items: UserNotification[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface UnreadCountResponse {
+  count: number;
+}
