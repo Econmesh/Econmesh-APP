@@ -292,6 +292,59 @@ export interface UserNotification {
   read_at: string | null;
   created_at: string;
   campaign_id?: string | null;
+  kind?: "general" | "support";
+  metadata?: Record<string, string>;
+}
+
+export type SupportTicketStatus = "open" | "in_progress" | "closed";
+
+export type SupportMessageType = "user_message" | "admin_reply" | "internal_note";
+
+export interface SupportTicket {
+  id: string;
+  user_id: string;
+  ticket_number: number;
+  subject: string;
+  status: SupportTicketStatus;
+  assigned_admin_id?: string | null;
+  assigned_admin_name?: string | null;
+  closed_by?: string | null;
+  closed_at?: string | null;
+  last_message_at?: string | null;
+  last_responder_admin_id?: string | null;
+  last_responder_admin_name?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SupportTicketDetail extends SupportTicket {
+  user_name?: string | null;
+  user_email?: string | null;
+  user_online?: boolean;
+}
+
+export interface SupportMessage {
+  id: string;
+  ticket_id: string;
+  author_id: string;
+  author_role: "user" | "admin";
+  author_name?: string | null;
+  message_type: SupportMessageType;
+  body: string;
+  read_at?: string | null;
+  created_at: string;
+}
+
+export interface SupportTicketListResponse {
+  items: SupportTicket[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface SupportMessageListResponse {
+  items: SupportMessage[];
+  total: number;
 }
 
 export interface UserNotificationListResponse {

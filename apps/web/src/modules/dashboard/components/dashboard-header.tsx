@@ -18,6 +18,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { NotificationBell } from "@/modules/notifications/components/notification-bell";
 
+
 function UserAvatar({
   name,
   email,

@@ -30,6 +30,8 @@ function normalizeNotification(raw: UserNotification): UserNotification {
     ...raw,
     id: String(raw.id),
     campaign_id: raw.campaign_id ? String(raw.campaign_id) : null,
+    kind: raw.kind ?? "general",
+    metadata: raw.metadata ?? {},
   };
 }
 
@@ -180,6 +182,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             retryDelay = STREAM_RETRY_MS;
             if (event.type === "notification" && event.data) {
               const notification = normalizeNotification(event.data);
+              if (notification.kind === "support") {
+                continue;
+              }
               setUnreadNotifications((prev) => {
                 if (prev.some((n) => n.id === notification.id)) return prev;
                 setUnreadCount((count) => {
