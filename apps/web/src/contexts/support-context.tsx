@@ -112,26 +112,11 @@ export function SupportProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (
-      event.type === "message_created" ||
-      event.type === "ticket_closed" ||
-      event.type === "ticket_reopened"
-    ) {
+    if (event.type === "ticket_reopened") {
       const ticketNumber = Number(event.data?.ticket_number ?? 0);
       const alertId = `${event.type}-${ticketId}-${Date.now()}`;
-      let title = "Atualização no suporte";
-      let body = "Há uma nova atualização no seu chamado.";
-
-      if (event.type === "message_created") {
-        title = `Nova resposta no chamado #${String(ticketNumber).padStart(4, "0")}`;
-        body = "Nossa equipe respondeu ao seu chamado.";
-      } else if (event.type === "ticket_closed") {
-        title = `Chamado #${String(ticketNumber).padStart(4, "0")} encerrado`;
-        body = "Seu chamado de suporte foi encerrado.";
-      } else if (event.type === "ticket_reopened") {
-        title = `Chamado #${String(ticketNumber).padStart(4, "0")} reaberto`;
-        body = "Seu chamado de suporte foi reaberto.";
-      }
+      const title = `Chamado #${String(ticketNumber).padStart(4, "0")} reaberto`;
+      const body = "Seu chamado de suporte foi reaberto.";
 
       if (!viewing) {
         setAlerts((prev) => [

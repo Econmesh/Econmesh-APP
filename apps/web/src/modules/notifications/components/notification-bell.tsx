@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 
 import { useNotifications } from "@/contexts/notification-context";
 import { NotificationItem } from "@/modules/notifications/components/notification-item";
+import { getNotificationHref } from "@/modules/notifications/utils";
 
 export function NotificationBell() {
   const {
@@ -31,6 +32,7 @@ export function NotificationBell() {
   const [showAllRead, setShowAllRead] = useState(false);
 
   const hasUnread = unreadNotifications.length > 0;
+  const hasSupportNotifications = unreadNotifications.some((n) => n.kind === "support");
 
   useEffect(() => {
     if (!open) {
@@ -96,19 +98,24 @@ export function NotificationBell() {
             <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-red-600">
               Não lidas
             </p>
-            {unreadNotifications.map((notification) => (
-              <DropdownMenuItem
-                key={notification.id}
-                className="cursor-pointer rounded-none p-0 focus:bg-transparent"
-                onClick={() => void markRead(notification.id)}
-              >
-                <NotificationItem
-                  notification={notification}
-                  compact
-                  onMarkRead={(id) => void markRead(id)}
-                />
-              </DropdownMenuItem>
-            ))}
+            {unreadNotifications.map((notification) => {
+              const href = getNotificationHref(notification);
+
+              return (
+                <DropdownMenuItem
+                  key={notification.id}
+                  className="cursor-pointer rounded-none p-0 focus:bg-transparent"
+                  render={
+                    href ? (
+                      <Link href={href} onClick={() => void markRead(notification.id)} />
+                    ) : undefined
+                  }
+                  onClick={href ? undefined : () => void markRead(notification.id)}
+                >
+                  <NotificationItem notification={notification} compact interactive={false} />
+                </DropdownMenuItem>
+              );
+            })}
           </div>
         ) : readNotifications.length === 0 && !loadingRead ? (
           <p className="px-2 py-4 text-center text-sm text-muted-foreground">
@@ -147,6 +154,11 @@ export function NotificationBell() {
         ) : null}
 
         <DropdownMenuSeparator />
+        {hasSupportNotifications ? (
+          <DropdownMenuItem render={<Link href="/dashboard/suporte" />} className="mx-1">
+            Ver atendimento de suporte
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuItem render={<Link href="/dashboard/notificacoes" />} className="mx-1 mb-1">
           Ver todas
         </DropdownMenuItem>

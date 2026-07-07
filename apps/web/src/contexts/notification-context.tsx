@@ -10,9 +10,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { usePathname } from "next/navigation";
 import { toast } from "sonner";
 
 import { useAuth } from "@/hooks/use-auth";
+import { normalizeTicketId } from "@/modules/support/support-realtime";
 import { notificationsService } from "@/services/notifications/notifications.service";
 import type { UserNotification } from "@/types/api";
 
@@ -35,6 +37,10 @@ function normalizeNotification(raw: UserNotification): UserNotification {
   };
 }
 
+function isViewingSupportTicket(pathname: string | null, ticketId: string) {
+  return pathname?.toLowerCase() === `/dashboard/suporte/${normalizeTicketId(ticketId)}`;
+}
+
 type NotificationContextValue = {
   unreadNotifications: UserNotification[];
   readNotifications: UserNotification[];
@@ -52,6 +58,9 @@ const NotificationContext = createContext<NotificationContextValue | null>(null)
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading, user, getIdToken } = useAuth();
+  const pathname = usePathname();
+  const pathnameRef = useRef(pathname);
+  pathnameRef.current = pathname;
   const [unreadNotifications, setUnreadNotifications] = useState<UserNotification[]>([]);
   const [readNotifications, setReadNotifications] = useState<UserNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -182,7 +191,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             retryDelay = STREAM_RETRY_MS;
             if (event.type === "notification" && event.data) {
               const notification = normalizeNotification(event.data);
-              if (notification.kind === "support") {
+              const ticketId = notification.metadata?.ticket_id;
+              if (
+                notification.kind === "support" &&
+                ticketId &&
+                isViewingSupportTicket(pathnameRef.current, ticketId)
+              ) {
                 continue;
               }
               setUnreadNotifications((prev) => {
