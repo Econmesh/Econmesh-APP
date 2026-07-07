@@ -208,6 +208,26 @@ export interface Opportunity {
   images: OpportunityImage[];
   created_at: string;
   updated_at: string;
+  matching?: OpportunityMatch | null;
+}
+
+export type MatchPotential = "HIGH" | "MEDIUM" | "LOW";
+
+export interface MatchDetails {
+  category: number;
+  technical_detail: number;
+  purity: number;
+  physical_state: number;
+  location: number;
+  quantity: number;
+  price: number;
+}
+
+export interface OpportunityMatch {
+  score: number;
+  potential: MatchPotential;
+  details: MatchDetails;
+  matched_demand: Opportunity;
 }
 
 export interface OpportunityListParams {
@@ -233,6 +253,7 @@ export interface OpportunityListResponse {
   page: number;
   page_size: number;
   has_more: boolean;
+  has_demands: boolean;
 }
 
 export interface OpportunityCreatePayload {

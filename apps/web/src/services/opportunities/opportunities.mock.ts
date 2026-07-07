@@ -227,6 +227,7 @@ export const opportunitiesMockService = {
 			page,
 			page_size: pageSize,
 			has_more: hasMore,
+			has_demands: false,
 		};
 	},
 

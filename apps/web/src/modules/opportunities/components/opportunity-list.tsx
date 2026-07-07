@@ -2,9 +2,10 @@
 
 import { Button } from "@econmesh-app/ui/components/button";
 import { Loader2, Target } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { EmptyState } from "@/components/feedback/empty-state";
+import { MatchingModal } from "@/modules/opportunities/components/matching-modal";
 import { OpportunityCard } from "@/modules/opportunities/components/opportunity-card";
 import { OpportunityListSkeleton } from "@/modules/opportunities/components/opportunity-card-skeleton";
 import type { Opportunity } from "@/types/api";
@@ -15,6 +16,7 @@ type OpportunityListProps = {
 	loadingMore: boolean;
 	hasMore: boolean;
 	total: number;
+	hasDemands?: boolean;
 	onLoadMore: () => void;
 };
 
@@ -24,9 +26,12 @@ export function OpportunityList({
 	loadingMore,
 	hasMore,
 	total,
+	hasDemands = false,
 	onLoadMore,
 }: OpportunityListProps) {
 	const sentinelRef = useRef<HTMLDivElement>(null);
+	const [selectedOpportunity, setSelectedOpportunity] =
+		useState<Opportunity | null>(null);
 
 	useEffect(() => {
 		const sentinel = sentinelRef.current;
@@ -57,6 +62,8 @@ export function OpportunityList({
 		);
 	}
 
+	const selectedMatching = selectedOpportunity?.matching ?? null;
+
 	return (
 		<div className="space-y-4">
 			<p className="text-muted-foreground text-sm">
@@ -66,7 +73,12 @@ export function OpportunityList({
 
 			<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
 				{opportunities.map((opportunity) => (
-					<OpportunityCard key={opportunity.id} opportunity={opportunity} />
+					<OpportunityCard
+						key={opportunity.id}
+						opportunity={opportunity}
+						hasDemands={hasDemands}
+						onMatchClick={setSelectedOpportunity}
+					/>
 				))}
 			</div>
 
@@ -86,6 +98,17 @@ export function OpportunityList({
 					</p>
 				) : null}
 			</div>
+
+			{selectedOpportunity && selectedMatching && (
+				<MatchingModal
+					opportunity={selectedOpportunity}
+					matching={selectedMatching}
+					open
+					onOpenChange={(open) => {
+						if (!open) setSelectedOpportunity(null);
+					}}
+				/>
+			)}
 		</div>
 	);
 }

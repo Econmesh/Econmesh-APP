@@ -29,7 +29,7 @@ export default function OportunidadesPage() {
     [filters, debouncedSearch],
   );
 
-  const { opportunities, loading, loadingMore, hasMore, total, loadMore, error } =
+  const { opportunities, loading, loadingMore, hasMore, hasDemands, total, loadMore, error } =
     useOpportunities(queryParams);
 
   useEffect(() => {
@@ -98,6 +98,7 @@ export default function OportunidadesPage() {
             loading={loading}
             loadingMore={loadingMore}
             hasMore={hasMore}
+            hasDemands={hasDemands}
             total={total}
             onLoadMore={loadMore}
           />

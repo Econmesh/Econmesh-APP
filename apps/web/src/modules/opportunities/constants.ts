@@ -1,4 +1,5 @@
 import type {
+	MatchPotential,
 	OfferDemand,
 	OpportunityPeriodicity,
 	OpportunitySort,
@@ -159,3 +160,41 @@ export const PERIODICITY_LABELS: Record<OpportunityPeriodicity, string> = {
 export const MAX_OPPORTUNITY_IMAGES = 5;
 
 export const OPPORTUNITY_LIST_PAGE_SIZE = 12;
+
+export const MATCH_POTENTIAL_LABELS: Record<MatchPotential, string> = {
+	HIGH: "Alto Potencial",
+	MEDIUM: "Médio Potencial",
+	LOW: "Baixo Potencial",
+};
+
+export const MATCH_POTENTIAL_BADGE_CLASSES: Record<MatchPotential, string> = {
+	HIGH: "border-transparent bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+	MEDIUM: "border-transparent bg-amber-500/15 text-amber-700 dark:text-amber-400",
+	LOW: "border-transparent bg-red-500/15 text-red-700 dark:text-red-400",
+};
+
+export const MATCH_POTENTIAL_CARD_CLASSES: Record<MatchPotential, string> = {
+	HIGH: "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+	MEDIUM: "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400",
+	LOW: "border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-400",
+};
+
+export const MATCH_CRITERIA_LABELS = {
+	category: "Categoria",
+	technical_detail: "Detalhe Técnico",
+	purity: "Pureza",
+	physical_state: "Estado Físico",
+	location: "Localização",
+	quantity: "Quantidade",
+	price: "Preço",
+} as const;
+
+export const MATCH_CRITERIA_ORDER = [
+	"category",
+	"technical_detail",
+	"purity",
+	"physical_state",
+	"location",
+	"quantity",
+	"price",
+] as const satisfies ReadonlyArray<keyof typeof MATCH_CRITERIA_LABELS>;

@@ -13,6 +13,7 @@ type UseOpportunitiesResult = {
 	loadingMore: boolean;
 	error: string | null;
 	hasMore: boolean;
+	hasDemands: boolean;
 	total: number;
 	loadMore: () => void;
 	refresh: () => void;
@@ -26,6 +27,7 @@ export function useOpportunities(
 	const [loadingMore, setLoadingMore] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [hasMore, setHasMore] = useState(false);
+	const [hasDemands, setHasDemands] = useState(false);
 	const [total, setTotal] = useState(0);
 	const [page, setPage] = useState(1);
 	const paramsRef = useRef(params);
@@ -50,6 +52,7 @@ export function useOpportunities(
 					append ? [...prev, ...response.items] : response.items,
 				);
 				setHasMore(response.has_more);
+				setHasDemands(response.has_demands ?? false);
 				setTotal(response.total);
 				setPage(pageToLoad);
 			} catch (err) {
@@ -94,6 +97,7 @@ export function useOpportunities(
 		loadingMore,
 		error,
 		hasMore,
+		hasDemands,
 		total,
 		loadMore,
 		refresh,
