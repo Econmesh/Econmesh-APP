@@ -5,5 +5,9 @@ export function getNotificationHref(notification: UserNotification): string | nu
     const ticketId = notification.metadata?.ticket_id;
     return ticketId ? `/dashboard/suporte/${ticketId}` : "/dashboard/suporte";
   }
+  if (notification.kind === "agreement") {
+    const agreementId = notification.metadata?.agreement_id;
+    return agreementId ? `/dashboard/acordos/${agreementId}` : "/dashboard/acordos";
+  }
   return null;
 }

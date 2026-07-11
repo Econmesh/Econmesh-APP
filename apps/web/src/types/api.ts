@@ -64,6 +64,7 @@ export interface Company {
   tax_id: string;
   email?: string | null;
   phone?: string | null;
+  legal_representative?: string | null;
   address?: CompanyAddress | null;
   country: string;
   website?: string | null;
@@ -82,6 +83,7 @@ export interface CompanyCreatePayload {
   tax_id: string;
   email?: string | null;
   phone?: string | null;
+  legal_representative?: string | null;
   address?: CompanyAddress | null;
   country?: string;
   website?: string | null;
@@ -96,6 +98,7 @@ export interface CompanyUpdatePayload {
   trade_name?: string | null;
   email?: string | null;
   phone?: string | null;
+  legal_representative?: string | null;
   address?: CompanyAddress | null;
   website?: string | null;
   description?: string | null;
@@ -313,7 +316,7 @@ export interface UserNotification {
   read_at: string | null;
   created_at: string;
   campaign_id?: string | null;
-  kind?: "general" | "support";
+  kind?: "general" | "support" | "agreement";
   metadata?: Record<string, string>;
 }
 
@@ -377,4 +380,218 @@ export interface UserNotificationListResponse {
 
 export interface UnreadCountResponse {
   count: number;
+}
+
+export type AgreementStatus =
+  | "draft"
+  | "awaiting_send"
+  | "awaiting_signatures"
+  | "partially_signed"
+  | "signed"
+  | "rejected"
+  | "cancelled"
+  | "expired";
+
+export type SigningMode = "unordered" | "ordered";
+export type ParticipantKind = "company" | "external";
+export type ParticipantRole =
+  | "sign"
+  | "approve"
+  | "witness"
+  | "acknowledge"
+  | "receipt";
+export type ParticipantStatus = "pending" | "viewed" | "completed" | "rejected";
+export type AgreementFieldType =
+  | "signature"
+  | "date"
+  | "name"
+  | "cpf"
+  | "job_title"
+  | "company"
+  | "initials"
+  | "text"
+  | "checkbox";
+export type AgreementFilter =
+  | "all"
+  | "signed"
+  | "pending"
+  | "mine"
+  | "organization"
+  | "company"
+  | "rejected"
+  | "expired";
+export type AgreementSort = "newest" | "oldest" | "updated" | "title";
+
+export interface AgreementFile {
+  storage_key: string;
+  url: string;
+  sha256: string;
+  filename: string;
+  page_count: number;
+  size_bytes?: number | null;
+}
+
+export interface AgreementParticipant {
+  id: string;
+  kind: ParticipantKind;
+  user_id?: string | null;
+  company_id?: string | null;
+  company_name?: string | null;
+  name: string;
+  email: string;
+  cpf?: string | null;
+  job_title?: string | null;
+  role: ParticipantRole;
+  order_index: number;
+  status: ParticipantStatus;
+  completed_at?: string | null;
+  rejected_at?: string | null;
+  rejection_reason?: string | null;
+}
+
+export interface AgreementField {
+  id: string;
+  participant_id: string;
+  field_type: AgreementFieldType;
+  page: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  value?: string | null;
+}
+
+export interface AgreementListItem {
+  id: string;
+  title: string;
+  status: AgreementStatus;
+  company_id: string;
+  company_name: string;
+  owner_user_id: string;
+  signing_mode: SigningMode;
+  deadline?: string | null;
+  participants: AgreementParticipant[];
+  signed_count: number;
+  total_participants: number;
+  progress_percent: number;
+  verification_code: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Agreement extends AgreementListItem {
+  description?: string | null;
+  original_file?: AgreementFile | null;
+  signed_file?: AgreementFile | null;
+  audit_report_file?: AgreementFile | null;
+  certificate_file?: AgreementFile | null;
+  fields: AgreementField[];
+}
+
+export interface AgreementListResponse {
+  items: AgreementListItem[];
+  total: number;
+  page: number;
+  page_size: number;
+  has_more: boolean;
+}
+
+export interface AgreementListParams {
+  q?: string;
+  filter?: AgreementFilter;
+  sort?: AgreementSort;
+  company_id?: string;
+  page?: number;
+  page_size?: number;
+}
+
+export interface AgreementCreatePayload {
+  title: string;
+  description?: string | null;
+  deadline?: string | null;
+  company_id: string;
+  signing_mode?: SigningMode;
+}
+
+export interface AgreementUpdatePayload {
+  title?: string;
+  description?: string | null;
+  deadline?: string | null;
+  signing_mode?: SigningMode;
+}
+
+export interface ParticipantInput {
+  kind: ParticipantKind;
+  company_id?: string | null;
+  company_name?: string | null;
+  name: string;
+  email: string;
+  cpf?: string | null;
+  job_title?: string | null;
+  role: ParticipantRole;
+  order_index: number;
+}
+
+export interface FieldInput {
+  id?: string;
+  participant_id: string;
+  field_type: AgreementFieldType;
+  page: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  value?: string | null;
+}
+
+export interface TimelineEvent {
+  id: string;
+  agreement_id: string;
+  event_type: string;
+  actor_user_id?: string | null;
+  actor_name?: string | null;
+  actor_company_id?: string | null;
+  actor_company_name?: string | null;
+  ip?: string | null;
+  user_agent?: string | null;
+  metadata: Record<string, string>;
+  created_at: string;
+}
+
+export interface AgreementProgress {
+  total_participants: number;
+  completed: number;
+  pending: number;
+  rejected: number;
+  viewed: number;
+  progress_percent: number;
+  pending_participants: AgreementParticipant[];
+  rejected_participants: AgreementParticipant[];
+  viewed_participants: AgreementParticipant[];
+  completed_participants: AgreementParticipant[];
+}
+
+export interface CompanySearchItem {
+  id: string;
+  legal_name: string;
+  trade_name?: string | null;
+  tax_id: string;
+  email?: string | null;
+  phone?: string | null;
+  legal_representative?: string | null;
+  owner_user_id: string;
+  owner_name?: string | null;
+  owner_email?: string | null;
+  owner_cpf?: string | null;
+  owner_job_title?: string | null;
+}
+
+export interface EligibilityResponse {
+  eligible: boolean;
+  missing: string[];
+}
+
+export interface DownloadUrlResponse {
+  url: string;
+  artifact: string;
 }

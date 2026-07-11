@@ -162,6 +162,12 @@ export const api = {
     options?: Omit<RequestOptions, "method" | "body">,
   ) => apiRequest<T>(`${API_V1_PREFIX}${path}`, { ...options, method: "PATCH", body }),
 
+  put: <T>(
+    path: string,
+    body?: unknown,
+    options?: Omit<RequestOptions, "method" | "body">,
+  ) => apiRequest<T>(`${API_V1_PREFIX}${path}`, { ...options, method: "PUT", body }),
+
   delete: <T>(path: string, options?: Omit<RequestOptions, "method" | "body">) =>
     apiRequest<T>(`${API_V1_PREFIX}${path}`, { ...options, method: "DELETE" }),
 };
