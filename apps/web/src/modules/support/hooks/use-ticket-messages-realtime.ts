@@ -25,7 +25,7 @@ type Options = {
   messagesRef: MutableRefObject<SupportMessage[]>;
   setMessages: Dispatch<SetStateAction<SupportMessage[]>>;
   fetchMessages: () => Promise<SupportMessage[]>;
-  fetchTicket?: () => Promise<void>;
+  fetchTicket?: () => Promise<unknown>;
   onIncomingAdminReply?: () => void;
 };
 
