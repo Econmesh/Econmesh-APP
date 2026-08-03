@@ -316,7 +316,7 @@ export interface UserNotification {
   read_at: string | null;
   created_at: string;
   campaign_id?: string | null;
-  kind?: "general" | "support" | "agreement";
+  kind?: "general" | "support" | "agreement" | "conversation";
   metadata?: Record<string, string>;
 }
 
@@ -368,6 +368,63 @@ export interface SupportTicketListResponse {
 
 export interface SupportMessageListResponse {
   items: SupportMessage[];
+  total: number;
+}
+
+export type ConversationStatus = "open" | "closed";
+
+export type ConversationAuthorRole = "offerer" | "interested" | "admin";
+
+export type ConversationMessageType = "participant_message" | "internal_note";
+
+export interface Conversation {
+  id: string;
+  opportunity_id: string;
+  opportunity_title: string;
+  offerer_company_id: string;
+  offerer_company_name: string;
+  offerer_user_id: string;
+  interested_company_id: string;
+  interested_company_name: string;
+  interested_user_id: string;
+  created_by_user_id: string;
+  status: ConversationStatus;
+  last_message_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  counterpart_company_name?: string | null;
+  my_role?: "offerer" | "interested" | null;
+}
+
+export interface ConversationDetail extends Conversation {
+  offerer_user_name?: string | null;
+  interested_user_name?: string | null;
+  offerer_online?: boolean;
+  interested_online?: boolean;
+}
+
+export interface ConversationMessage {
+  id: string;
+  conversation_id: string;
+  author_id: string;
+  author_company_id?: string | null;
+  author_role: ConversationAuthorRole;
+  author_name?: string | null;
+  message_type: ConversationMessageType;
+  body: string;
+  read_at?: string | null;
+  created_at: string;
+}
+
+export interface ConversationListResponse {
+  items: Conversation[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface ConversationMessageListResponse {
+  items: ConversationMessage[];
   total: number;
 }
 

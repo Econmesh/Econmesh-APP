@@ -17,9 +17,11 @@ import {
 	Pencil,
 	Trash2,
 } from "lucide-react";
+import { Select } from "@econmesh-app/ui/components/select";
 import type { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -33,7 +35,10 @@ import {
 	formatPriceDisplay,
 	formatQuantity,
 } from "@/modules/opportunities/schemas";
-import type { Opportunity } from "@/types/api";
+import { companiesService } from "@/services/companies/companies.service";
+import { conversationsService } from "@/services/conversations/conversations.service";
+import type { Company, Opportunity } from "@/types/api";
+import { ApiError } from "@/utils/errors";
 
 type OpportunityDetailViewProps = {
 	opportunity: Opportunity;
@@ -57,24 +62,71 @@ function DetailItem({
 	);
 }
 
+function companyLabel(company: Company) {
+	return company.trade_name?.trim() || company.legal_name;
+}
+
 export function OpportunityDetailView({
 	opportunity,
 	onDeleted,
 	isOwner = false,
 }: OpportunityDetailViewProps) {
+	const router = useRouter();
 	const [selectedImage, setSelectedImage] = useState(0);
 	const [showDelete, setShowDelete] = useState(false);
+	const [starting, setStarting] = useState(false);
+	const [companyPickerOpen, setCompanyPickerOpen] = useState(false);
+	const [companies, setCompanies] = useState<Company[]>([]);
+	const [selectedCompanyId, setSelectedCompanyId] = useState("");
 
 	const images = opportunity.images.length > 0 ? opportunity.images : [];
 	const currentImage = images[selectedImage];
 
-	function handleContact() {
-		toast.info(
-			"Em breve você poderá entrar em contato diretamente pelo chat.",
-			{
-				description: "Integração com chat em desenvolvimento.",
-			},
-		);
+	async function startConversation(companyId: string) {
+		setStarting(true);
+		try {
+			const conversation = await conversationsService.create({
+				opportunity_id: opportunity.id,
+				company_id: companyId,
+			});
+			toast.success("Conversa iniciada.");
+			setCompanyPickerOpen(false);
+			router.push(`/dashboard/conversas/${conversation.id}`);
+		} catch (error) {
+			toast.error(
+				error instanceof ApiError
+					? error.message
+					: "Não foi possível iniciar a conversa.",
+			);
+		} finally {
+			setStarting(false);
+		}
+	}
+
+	async function handleContact() {
+		setStarting(true);
+		try {
+			const list = await companiesService.list({ page: 1, page_size: 50 });
+			if (list.length === 0) {
+				toast.error("Cadastre uma empresa antes de iniciar a conversa.");
+				return;
+			}
+			if (list.length === 1) {
+				await startConversation(list[0]!.id);
+				return;
+			}
+			setCompanies(list);
+			setSelectedCompanyId(list[0]!.id);
+			setCompanyPickerOpen(true);
+		} catch (error) {
+			toast.error(
+				error instanceof ApiError
+					? error.message
+					: "Não foi possível carregar suas empresas.",
+			);
+		} finally {
+			setStarting(false);
+		}
 	}
 
 	return (
@@ -120,9 +172,9 @@ export function OpportunityDetailView({
 							</Button>
 						</div>
 					) : (
-						<Button onClick={handleContact}>
+						<Button onClick={handleContact} disabled={starting}>
 							<MessageCircle className="size-4" aria-hidden />
-							Entrar em contato
+							{starting ? "Abrindo..." : "Iniciar conversa"}
 						</Button>
 					)}
 				</div>
@@ -217,9 +269,14 @@ export function OpportunityDetailView({
 						</Card>
 
 						{!isOwner ? (
-							<Button className="w-full" size="lg" onClick={handleContact}>
+							<Button
+								className="w-full"
+								size="lg"
+								onClick={handleContact}
+								disabled={starting}
+							>
 								<MessageCircle className="size-4" aria-hidden />
-								Entrar em contato
+								{starting ? "Abrindo..." : "Iniciar conversa"}
 							</Button>
 						) : null}
 					</div>
@@ -284,6 +341,46 @@ export function OpportunityDetailView({
 				onOpenChange={setShowDelete}
 				onDeleted={onDeleted}
 			/>
+
+			{companyPickerOpen ? (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+					<div className="w-full max-w-md space-y-4 rounded-xl border border-border bg-card p-6 shadow-lg">
+						<div>
+							<h2 className="font-semibold text-lg">Escolher empresa</h2>
+							<p className="mt-1 text-muted-foreground text-sm">
+								Selecione com qual das suas empresas deseja iniciar a conversa.
+							</p>
+						</div>
+						<Select
+							value={selectedCompanyId}
+							onChange={(e) => setSelectedCompanyId(e.target.value)}
+						>
+							{companies.map((company) => (
+								<option key={company.id} value={company.id}>
+									{companyLabel(company)}
+								</option>
+							))}
+						</Select>
+						<div className="flex justify-end gap-2">
+							<Button
+								variant="outline"
+								onClick={() => setCompanyPickerOpen(false)}
+								disabled={starting}
+							>
+								Cancelar
+							</Button>
+							<Button
+								onClick={() => {
+									if (selectedCompanyId) void startConversation(selectedCompanyId);
+								}}
+								disabled={starting || !selectedCompanyId}
+							>
+								{starting ? "Abrindo..." : "Iniciar conversa"}
+							</Button>
+						</div>
+					</div>
+				</div>
+			) : null}
 		</>
 	);
 }

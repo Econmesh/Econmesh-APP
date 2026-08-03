@@ -3,6 +3,7 @@ import {
   Handshake,
   Headphones,
   LayoutDashboard,
+  MessageCircle,
   Target,
   type LucideIcon,
 } from "lucide-react";
@@ -28,6 +29,12 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
     label: "Oportunidades",
     shortLabel: "Oportun.",
     icon: Target,
+  },
+  {
+    href: "/dashboard/conversas",
+    label: "Conversas",
+    shortLabel: "Conversas",
+    icon: MessageCircle,
   },
   { href: "/dashboard/acordos", label: "Acordos", shortLabel: "Acordos", icon: Handshake },
   { href: "/dashboard/suporte", label: "Suporte", shortLabel: "Suporte", icon: Headphones },
