@@ -313,7 +313,7 @@ export interface UserNotification {
   read_at: string | null;
   created_at: string;
   campaign_id?: string | null;
-  kind?: "general" | "support";
+  kind?: "general" | "support" | "agreement";
   metadata?: Record<string, string>;
 }
 
