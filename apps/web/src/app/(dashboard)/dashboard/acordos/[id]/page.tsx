@@ -26,6 +26,13 @@ import { agreementsService } from "@/services/acordos/acordos.service";
 import { ApiError } from "@/utils/errors";
 import type { Agreement, AgreementProgress, TimelineEvent } from "@/types/api";
 
+const PARTICIPANT_STATUS_LABELS: Record<string, string> = {
+	pending: "Pendente",
+	viewed: "Visualizou",
+	completed: "Assinou",
+	rejected: "Rejeitou",
+};
+
 export default function AcordoDetailPage() {
 	const params = useParams<{ id: string }>();
 	const router = useRouter();
@@ -112,6 +119,25 @@ export default function AcordoDetailPage() {
 		["pending", "viewed"].includes(myParticipant.status) &&
 		["awaiting_signatures", "partially_signed"].includes(agreement.status);
 
+	const sortedParticipants = [...agreement.participants].sort(
+		(a, b) => a.order_index - b.order_index,
+	);
+	const currentSigner = sortedParticipants.find((p) =>
+		["pending", "viewed"].includes(p.status),
+	);
+
+	let stageHint = "";
+	if (agreement.status === "awaiting_send") {
+		stageHint =
+			"Etapa atual: posicionar campos de assinatura e enviar o documento às partes.";
+	} else if (agreement.status === "awaiting_signatures" || agreement.status === "partially_signed") {
+		stageHint = currentSigner
+			? `Etapa atual: aguardando assinatura de ${currentSigner.name}${currentSigner.company_name ? ` (${currentSigner.company_name})` : ""}.`
+			: "Etapa atual: processando assinaturas.";
+	} else if (agreement.status === "signed") {
+		stageHint = "Etapa atual: acordo concluído. Todas as partes assinaram.";
+	}
+
 	return (
 		<div className="space-y-6">
 			<div className="flex flex-wrap items-start justify-between gap-4">
@@ -131,6 +157,9 @@ export default function AcordoDetailPage() {
 					>
 						{AGREEMENT_STATUS_LABELS[agreement.status]}
 					</span>
+					{stageHint ? (
+						<p className="mt-3 max-w-xl text-sm text-muted-foreground">{stageHint}</p>
+					) : null}
 				</div>
 				<div className="flex flex-wrap gap-2">
 					{["draft", "awaiting_send"].includes(agreement.status) ? (
@@ -168,30 +197,55 @@ export default function AcordoDetailPage() {
 
 			<div className="grid gap-4 lg:grid-cols-3">
 				<section className="space-y-3 rounded-xl border bg-card/80 p-4 lg:col-span-2">
-					<h2 className="font-semibold">Participantes</h2>
+					<h2 className="font-semibold">Fluxo de assinaturas</h2>
+					<p className="text-xs text-muted-foreground">
+						Ordem e posição das partes conforme o contrato
+						{agreement.signing_mode === "ordered"
+							? " (assinatura sequencial)."
+							: " (assinatura em qualquer ordem)."}
+					</p>
 					<ul className="space-y-2">
-						{agreement.participants.map((p) => (
-							<li
-								key={p.id}
-								className="flex items-center gap-3 rounded-lg border p-3 text-sm"
-							>
-								{p.status === "completed" ? (
-									<CheckCircle2 className="size-4 text-primary" />
-								) : (
-									<Clock3 className="size-4 text-muted-foreground" />
-								)}
-								<div className="min-w-0 flex-1">
-									<p className="font-medium">{p.name}</p>
-									<p className="text-xs text-muted-foreground">
-										{PARTICIPANT_ROLE_LABELS[p.role]} · {p.email}
-										{p.company_name ? ` · ${p.company_name}` : ""}
-									</p>
-								</div>
-								<span className="text-xs uppercase text-muted-foreground">
-									{p.status}
-								</span>
-							</li>
-						))}
+						{sortedParticipants.map((p, index) => {
+							const isCurrent =
+								currentSigner?.id === p.id &&
+								["awaiting_signatures", "partially_signed"].includes(
+									agreement.status,
+								);
+							return (
+								<li
+									key={p.id}
+									className={`flex items-center gap-3 rounded-lg border p-3 text-sm ${
+										isCurrent ? "border-primary bg-primary/5" : ""
+									}`}
+								>
+									<span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold">
+										{index + 1}
+									</span>
+									{p.status === "completed" ? (
+										<CheckCircle2 className="size-4 text-primary" />
+									) : (
+										<Clock3 className="size-4 text-muted-foreground" />
+									)}
+									<div className="min-w-0 flex-1">
+										<p className="font-medium">
+											{p.name}
+											{isCurrent ? (
+												<span className="ml-2 text-xs font-normal text-primary">
+													· vez atual
+												</span>
+											) : null}
+										</p>
+										<p className="text-xs text-muted-foreground">
+											{PARTICIPANT_ROLE_LABELS[p.role]} · {p.email}
+											{p.company_name ? ` · ${p.company_name}` : ""}
+										</p>
+									</div>
+									<span className="text-xs uppercase text-muted-foreground">
+										{PARTICIPANT_STATUS_LABELS[p.status] ?? p.status}
+									</span>
+								</li>
+							);
+						})}
 					</ul>
 				</section>
 

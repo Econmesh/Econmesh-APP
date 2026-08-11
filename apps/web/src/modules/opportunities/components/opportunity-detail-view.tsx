@@ -89,7 +89,11 @@ export function OpportunityDetailView({
 				opportunity_id: opportunity.id,
 				company_id: companyId,
 			});
-			toast.success("Conversa iniciada.");
+			toast.success(
+				conversation.status === "open"
+					? "Conversa aberta."
+					: "Conversa iniciada.",
+			);
 			setCompanyPickerOpen(false);
 			router.push(`/dashboard/conversas/${conversation.id}`);
 		} catch (error) {

@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+
 import { ConversationDetailView } from "@/modules/conversations/components/conversation-detail-view";
 
 type PageProps = {
@@ -6,5 +8,9 @@ type PageProps = {
 
 export default async function ConversaDetailPage({ params }: PageProps) {
   const { id } = await params;
-  return <ConversationDetailView conversationId={id} />;
+  return (
+    <Suspense fallback={<p className="text-sm text-muted-foreground">Carregando conversa...</p>}>
+      <ConversationDetailView conversationId={id} />
+    </Suspense>
+  );
 }

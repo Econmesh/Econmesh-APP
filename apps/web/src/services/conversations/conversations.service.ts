@@ -26,6 +26,7 @@ export type ConversationStreamEventType =
   | "message_created"
   | "messages_read"
   | "presence_changed"
+  | "conversation_updated"
   | "ping";
 
 export type ConversationStreamEvent = {
@@ -148,6 +149,54 @@ export const conversationsService = {
     return api.post<ConversationMessageListResponse>(
       `/conversations/${conversationId}/messages/read`,
       undefined,
+      { auth: true },
+    );
+  },
+
+  close(conversationId: string, reason?: string) {
+    return api.post<Conversation>(
+      `/conversations/${conversationId}/close`,
+      { reason: reason || null },
+      { auth: true },
+    );
+  },
+
+  reopen(conversationId: string) {
+    return api.post<Conversation>(
+      `/conversations/${conversationId}/reopen`,
+      {},
+      { auth: true },
+    );
+  },
+
+  requestReopen(conversationId: string, message?: string) {
+    return api.post<Conversation>(
+      `/conversations/${conversationId}/request-reopen`,
+      { message: message || null },
+      { auth: true },
+    );
+  },
+
+  respondReopen(conversationId: string, accept: boolean, message?: string) {
+    return api.post<Conversation>(
+      `/conversations/${conversationId}/respond-reopen`,
+      { accept, message: message || null },
+      { auth: true },
+    );
+  },
+
+  requestNewContact(conversationId: string, message?: string) {
+    return api.post<Conversation>(
+      `/conversations/${conversationId}/request-new-contact`,
+      { message: message || null },
+      { auth: true },
+    );
+  },
+
+  respondNewContact(conversationId: string, accept: boolean, message?: string) {
+    return api.post<Conversation>(
+      `/conversations/${conversationId}/respond-new-contact`,
+      { accept, message: message || null },
       { auth: true },
     );
   },

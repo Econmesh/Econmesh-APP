@@ -115,6 +115,12 @@ export const agreementsService = {
 		);
 	},
 
+	fetchFileBytes(id: string, artifact: string) {
+		return api.getArrayBuffer(`/agreements/${id}/file/${artifact}`, {
+			auth: true,
+		});
+	},
+
 	searchCompanies(q: string) {
 		return api.get<{ items: CompanySearchItem[] }>(
 			`/agreements/companies/search?q=${encodeURIComponent(q)}`,

@@ -140,9 +140,66 @@ export async function apiUploadRequest<T>(
   return payload as T;
 }
 
+async function apiArrayBufferRequest(
+  path: string,
+  options: Omit<RequestOptions, "body"> = {},
+): Promise<ArrayBuffer> {
+  const { auth = false, skipAuthRedirect = false, headers, ...rest } = options;
+
+  const requestHeaders = new Headers(headers);
+  requestHeaders.set("Accept", "application/pdf,application/octet-stream,*/*");
+
+  if (auth && tokenProvider) {
+    const token = await tokenProvider();
+    if (token) {
+      requestHeaders.set("Authorization", `Bearer ${token}`);
+    }
+  }
+
+  const response = await fetch(buildUrl(path), {
+    ...rest,
+    headers: requestHeaders,
+  });
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as ApiErrorBody | null;
+    const errorBody: ApiErrorBody =
+      payload && typeof payload === "object" && "code" in payload
+        ? payload
+        : {
+            code: "unknown_error",
+            message: response.statusText || "Request failed",
+          };
+
+    if (
+      !skipAuthRedirect &&
+      response.status === 401 &&
+      onUnauthorized &&
+      ["missing_token", "token_expired", "token_revoked", "token_invalid"].includes(
+        errorBody.code,
+      )
+    ) {
+      onUnauthorized();
+    }
+
+    throw new ApiError(response.status, errorBody);
+  }
+
+  return response.arrayBuffer();
+}
+
 export const api = {
   get: <T>(path: string, options?: Omit<RequestOptions, "method" | "body">) =>
     apiRequest<T>(`${API_V1_PREFIX}${path}`, { ...options, method: "GET" }),
+
+  getArrayBuffer: (
+    path: string,
+    options?: Omit<RequestOptions, "method" | "body">,
+  ) =>
+    apiArrayBufferRequest(`${API_V1_PREFIX}${path}`, {
+      ...options,
+      method: "GET",
+    }),
 
   post: <T>(
     path: string,

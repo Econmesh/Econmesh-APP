@@ -373,9 +373,26 @@ export interface SupportMessageListResponse {
 
 export type ConversationStatus = "open" | "closed";
 
-export type ConversationAuthorRole = "offerer" | "interested" | "admin";
+export type ConversationAuthorRole = "offerer" | "interested" | "admin" | "system";
 
-export type ConversationMessageType = "participant_message" | "internal_note";
+export type ConversationMessageType =
+  | "participant_message"
+  | "internal_note"
+  | "system_event";
+
+export type ConversationSystemEventKind =
+  | "contact_closed"
+  | "reopen_requested"
+  | "reopen_rejected"
+  | "contact_reopened"
+  | "new_contact_requested"
+  | "new_contact_accepted"
+  | "new_contact_rejected"
+  | "agreement_proposed"
+  | "agreement_submitted"
+  | "agreement_changes_requested"
+  | "agreement_rejected"
+  | "agreement_approved";
 
 export interface Conversation {
   id: string;
@@ -394,6 +411,24 @@ export interface Conversation {
   updated_at: string;
   counterpart_company_name?: string | null;
   my_role?: "offerer" | "interested" | null;
+  closed_by_user_id?: string | null;
+  closed_at?: string | null;
+  close_reason?: string | null;
+  reopen_requested_by_user_id?: string | null;
+  reopen_requested_at?: string | null;
+  reopen_request_message?: string | null;
+  new_contact_requested_by_user_id?: string | null;
+  new_contact_requested_at?: string | null;
+  new_contact_request_message?: string | null;
+  is_active?: boolean;
+  replaced_by_conversation_id?: string | null;
+  supersedes_conversation_id?: string | null;
+  i_closed?: boolean;
+  can_reopen?: boolean;
+  can_request_reopen?: boolean;
+  can_respond_reopen?: boolean;
+  can_request_new_contact?: boolean;
+  can_respond_new_contact?: boolean;
 }
 
 export interface ConversationDetail extends Conversation {
@@ -414,6 +449,10 @@ export interface ConversationMessage {
   body: string;
   read_at?: string | null;
   created_at: string;
+  event_kind?: ConversationSystemEventKind | null;
+  event_actor_user_id?: string | null;
+  event_actor_name?: string | null;
+  event_reason?: string | null;
 }
 
 export interface ConversationListResponse {
@@ -651,4 +690,150 @@ export interface EligibilityResponse {
 export interface DownloadUrlResponse {
   url: string;
   artifact: string;
+}
+
+export type ContractType = "servico" | "fornecimento" | "parceria" | "outro";
+
+export type ContractProposalStatus =
+  | "draft"
+  | "pending_approval"
+  | "changes_requested"
+  | "approved"
+  | "rejected"
+  | "sent_to_agreements";
+
+export interface PartySnapshot {
+  company_id: string;
+  legal_name: string;
+  trade_name: string | null;
+  tax_id: string;
+  address_line: string | null;
+  city: string | null;
+  state: string | null;
+  email: string | null;
+  phone: string | null;
+  legal_representative: string | null;
+}
+
+export interface OpportunitySnapshot {
+  opportunity_id: string;
+  title: string;
+  description: string;
+  category: string;
+  price: number | null;
+  price_negotiable: boolean;
+  periodicity: string | null;
+  prazo: string | null;
+}
+
+export interface ProposalSection {
+  id: string;
+  title: string;
+  content_html: string;
+  sort_order: number;
+  is_core: boolean;
+  is_admin_managed?: boolean;
+  is_editable?: boolean;
+  template_id?: string | null;
+}
+
+export interface ProposalPdfFile {
+  storage_key: string;
+  url: string;
+  sha256: string;
+  filename: string;
+  page_count: number;
+  size_bytes: number | null;
+}
+
+export interface ContractProposal {
+  id: string;
+  conversation_id: string;
+  opportunity_id: string;
+  offerer_company_id: string;
+  interested_company_id: string;
+  offerer_user_id: string;
+  interested_user_id: string;
+  created_by_user_id: string;
+  title: string;
+  contract_type: ContractType;
+  status: ContractProposalStatus;
+  contractor: PartySnapshot;
+  contracted: PartySnapshot;
+  opportunity: OpportunitySnapshot;
+  sections: ProposalSection[];
+  pdf_file: ProposalPdfFile | null;
+  agreement_id: string | null;
+  change_request_message: string | null;
+  rejection_reason: string | null;
+  my_role: "offerer" | "interested" | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContractProposalListItem {
+  id: string;
+  conversation_id: string;
+  opportunity_id: string;
+  title: string;
+  status: ContractProposalStatus;
+  contract_type: ContractType;
+  agreement_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContractProposalListResponse {
+  items: ContractProposalListItem[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface ContractProposalCreatePayload {
+  conversation_id: string;
+  contract_type?: ContractType;
+}
+
+export interface ContractProposalUpdatePayload {
+  title?: string;
+  contract_type?: ContractType;
+  contractor?: Partial<Omit<PartySnapshot, "company_id">>;
+  contracted?: Partial<Omit<PartySnapshot, "company_id">>;
+  opportunity?: Partial<Omit<OpportunitySnapshot, "opportunity_id">>;
+  sections?: Array<{
+    id?: string;
+    title: string;
+    content_html: string;
+    sort_order: number;
+    is_core?: boolean;
+    is_admin_managed?: boolean;
+    is_editable?: boolean;
+    template_id?: string | null;
+  }>;
+}
+
+export interface ApproveProposalResponse {
+  proposal: ContractProposal;
+  agreement_id: string;
+}
+
+export interface ContractSectionTemplate {
+  id: string;
+  title: string;
+  content_html: string;
+  contract_type: ContractType | "oportunidades" | "todos";
+  sort_order: number;
+  created_by: string;
+  is_active: boolean;
+  is_company_editable?: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContractSectionTemplateListResponse {
+  items: ContractSectionTemplate[];
+  total: number;
+  page: number;
+  page_size: number;
 }

@@ -3,6 +3,7 @@
 import { cn } from "@econmesh-app/ui/lib/utils";
 import { useEffect, useRef } from "react";
 
+import { formatSystemEventBody } from "@/modules/conversations/conversation-realtime";
 import type { ConversationMessage } from "@/types/api";
 
 type ConversationMessageThreadProps = {
@@ -47,6 +48,21 @@ export function ConversationMessageThread({
   return (
     <div className="flex flex-col gap-3 p-4">
       {messages.map((msg) => {
+        if (msg.message_type === "system_event") {
+          const body =
+            currentUserId && msg.event_kind
+              ? formatSystemEventBody(msg, currentUserId)
+              : msg.body;
+          return (
+            <div key={msg.id} className="flex justify-center px-2">
+              <div className="max-w-[90%] rounded-lg bg-muted/70 px-3 py-2 text-center text-xs text-muted-foreground">
+                <p className="whitespace-pre-wrap break-words">{body}</p>
+                <p className="mt-1 text-[10px] opacity-70">{formatTime(msg.created_at)}</p>
+              </div>
+            </div>
+          );
+        }
+
         const isMine = msg.author_id === currentUserId;
 
         return (
