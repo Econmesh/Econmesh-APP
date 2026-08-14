@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@econmesh-app/ui/components/button";
-import { Input } from "@econmesh-app/ui/components/input";
 import { Label } from "@econmesh-app/ui/components/label";
 import { Loader2, Upload } from "lucide-react";
 import Image from "next/image";
@@ -11,36 +10,39 @@ import { toast } from "sonner";
 import { FormField, FormInput, useFormErrors } from "@/modules/auth/components/auth-form";
 import { useCepLookup } from "@/modules/companies/hooks/use-cep-lookup";
 import {
+  BRAZILIAN_STATES,
+  COMPLIANCE_ACCEPT,
+  MAX_COMPLIANCE_BYTES,
   companyCreateSchema,
   companyUpdateSchema,
   formatCep,
   formatCnpj,
   formatPhone,
+  isAllowedComplianceFile,
   normalizeCompanyPayload,
   normalizeCompanyUpdatePayload,
+  type CompanyDocumentFiles,
   type CompanyFormValues,
 } from "@/modules/companies/schemas";
+import { DocumentStatusBadge } from "@/modules/companies/components/document-status-badge";
 import { companiesService } from "@/services/companies/companies.service";
-import type { Company, CompanyCreatePayload, CompanyUpdatePayload } from "@/types/api";
+import type { Company, CompanyComplianceFile, CompanyCreatePayload, CompanyUpdatePayload } from "@/types/api";
 import { ApiError, getValidationFieldErrors } from "@/utils/errors";
-
-const BRAZILIAN_STATES = [
-  "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
-  "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
-  "RS", "RO", "RR", "SC", "SP", "SE", "TO",
-] as const;
 
 type CompanyFormProps =
   | {
       mode: "create";
       initialData?: never;
-      onSubmit: (payload: CompanyCreatePayload) => Promise<void>;
+      onSubmit: (
+        payload: CompanyCreatePayload,
+        files: { operating_license: File; mtr: File },
+      ) => Promise<void>;
       submitLabel: string;
     }
   | {
       mode: "edit";
       initialData: Company;
-      onSubmit: (payload: CompanyUpdatePayload) => Promise<void>;
+      onSubmit: (payload: CompanyUpdatePayload, files: CompanyDocumentFiles) => Promise<void>;
       submitLabel: string;
     };
 
@@ -68,6 +70,38 @@ function companyToFormValues(company: Company): CompanyFormValues {
   };
 }
 
+function fileFieldError(file: File | null, required: boolean): string | null {
+  if (!file) return required ? "Envie o documento." : null;
+  if (!isAllowedComplianceFile(file)) return "Use PDF, JPEG ou PNG.";
+  if (file.size > MAX_COMPLIANCE_BYTES) return "Arquivo deve ter no máximo 10 MB.";
+  return null;
+}
+
+function CurrentDocument({ file }: { file?: CompanyComplianceFile | null }) {
+  if (!file) return null;
+  return (
+    <div className="space-y-1">
+      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <span>
+          Arquivo atual:{" "}
+          <a
+            href={file.public_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary hover:underline"
+          >
+            {file.filename}
+          </a>
+        </span>
+        <DocumentStatusBadge file={file} />
+      </div>
+      {file.status === "rejected" && file.rejection_reason ? (
+        <p className="text-xs text-destructive">Motivo: {file.rejection_reason}</p>
+      ) : null}
+    </div>
+  );
+}
+
 export function CompanyForm({ mode, initialData, onSubmit, submitLabel }: CompanyFormProps) {
   const { errors, setErrors, clear } = useFormErrors<string>();
   const [loading, setLoading] = useState(false);
@@ -77,6 +111,8 @@ export function CompanyForm({ mode, initialData, onSubmit, submitLabel }: Compan
     initialData?.logo_storage_key ?? null,
   );
   const [logoUrl, setLogoUrl] = useState<string | null>(initialData?.logo_url ?? null);
+  const [operatingLicense, setOperatingLicense] = useState<File | null>(null);
+  const [mtr, setMtr] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { lookup: lookupCep, loading: cepLoading } = useCepLookup();
 
@@ -174,13 +210,19 @@ export function CompanyForm({ mode, initialData, onSubmit, submitLabel }: Compan
 
     const schema = mode === "create" ? companyCreateSchema : companyUpdateSchema;
     const parsed = schema.safeParse(formValues);
+    const licenseError = fileFieldError(operatingLicense, mode === "create");
+    const mtrError = fileFieldError(mtr, mode === "create");
+    const fieldErrors: Record<string, string> = {};
 
     if (!parsed.success) {
-      const fieldErrors: Record<string, string> = {};
       for (const issue of parsed.error.issues) {
         const key = issue.path.join(".");
         if (key) fieldErrors[key] = issue.message;
       }
+    }
+    if (licenseError) fieldErrors.operating_license = licenseError;
+    if (mtrError) fieldErrors.mtr = mtrError;
+    if (Object.keys(fieldErrors).length > 0) {
       setErrors(fieldErrors);
       return;
     }
@@ -188,17 +230,23 @@ export function CompanyForm({ mode, initialData, onSubmit, submitLabel }: Compan
     setLoading(true);
     try {
       if (mode === "create") {
-        await onSubmit({
-          ...normalizeCompanyPayload(formValues),
-          logo_storage_key: logoStorageKey,
-          logo_url: logoUrl,
-        });
+        await onSubmit(
+          {
+            ...normalizeCompanyPayload(formValues),
+            logo_storage_key: logoStorageKey,
+            logo_url: logoUrl,
+          },
+          { operating_license: operatingLicense!, mtr: mtr! },
+        );
       } else {
-        await onSubmit({
-          ...normalizeCompanyUpdatePayload(formValues),
-          logo_storage_key: logoStorageKey,
-          logo_url: logoUrl,
-        });
+        await onSubmit(
+          {
+            ...normalizeCompanyUpdatePayload(formValues),
+            logo_storage_key: logoStorageKey,
+            logo_url: logoUrl,
+          },
+          { operating_license: operatingLicense, mtr },
+        );
       }
     } catch (error) {
       if (error instanceof ApiError) {
@@ -213,6 +261,9 @@ export function CompanyForm({ mode, initialData, onSubmit, submitLabel }: Compan
       setLoading(false);
     }
   }
+
+  const fileInputClass =
+    "block w-full text-sm file:mr-3 file:rounded-md file:border file:border-input file:bg-background file:px-3 file:py-1.5";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8" noValidate>
@@ -257,6 +308,7 @@ export function CompanyForm({ mode, initialData, onSubmit, submitLabel }: Compan
             <FormInput
               id="email"
               type="email"
+              required
               value={formValues.email ?? ""}
               onChange={(e) => updateField("email", e.target.value)}
               aria-invalid={!!errors.email}
@@ -266,6 +318,7 @@ export function CompanyForm({ mode, initialData, onSubmit, submitLabel }: Compan
           <FormField id="phone" label="Telefone" error={errors.phone}>
             <FormInput
               id="phone"
+              required
               value={formatPhone(formValues.phone ?? "")}
               onChange={(e) => updateField("phone", e.target.value)}
               aria-invalid={!!errors.phone}
@@ -297,6 +350,7 @@ export function CompanyForm({ mode, initialData, onSubmit, submitLabel }: Compan
           <FormField id="postal_code" label="CEP" error={errors["address.postal_code"]}>
             <FormInput
               id="postal_code"
+              required
               value={formatCep(formValues.address?.postal_code ?? "")}
               onChange={(e) => updateAddressField("postal_code", e.target.value)}
               onBlur={() => void handleCepBlur()}
@@ -307,9 +361,10 @@ export function CompanyForm({ mode, initialData, onSubmit, submitLabel }: Compan
             ) : null}
           </FormField>
 
-          <FormField id="street" label="Rua" error={errors["address.street"]} >
+          <FormField id="street" label="Rua" error={errors["address.street"]}>
             <FormInput
               id="street"
+              required
               value={formValues.address?.street ?? ""}
               onChange={(e) => updateAddressField("street", e.target.value)}
               className="md:col-span-2"
@@ -320,6 +375,7 @@ export function CompanyForm({ mode, initialData, onSubmit, submitLabel }: Compan
           <FormField id="number" label="Número" error={errors["address.number"]}>
             <FormInput
               id="number"
+              required
               value={formValues.address?.number ?? ""}
               onChange={(e) => updateAddressField("number", e.target.value)}
               aria-invalid={!!errors["address.number"]}
@@ -347,6 +403,7 @@ export function CompanyForm({ mode, initialData, onSubmit, submitLabel }: Compan
           <FormField id="city" label="Cidade" error={errors["address.city"]}>
             <FormInput
               id="city"
+              required
               value={formValues.address?.city ?? ""}
               onChange={(e) => updateAddressField("city", e.target.value)}
               aria-invalid={!!errors["address.city"]}
@@ -356,6 +413,7 @@ export function CompanyForm({ mode, initialData, onSubmit, submitLabel }: Compan
           <FormField id="state" label="Estado" error={errors["address.state"]}>
             <select
               id="state"
+              required
               value={formValues.address?.state ?? ""}
               onChange={(e) => updateAddressField("state", e.target.value)}
               className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
@@ -374,6 +432,50 @@ export function CompanyForm({ mode, initialData, onSubmit, submitLabel }: Compan
             <FormInput id="country" value="BR" disabled />
           </FormField>
         </div>
+      </section>
+
+      <section className="space-y-4 rounded-xl border border-border/80 bg-card/80 p-6">
+        <div>
+          <h2 className="text-base font-semibold">Documentos</h2>
+          <p className="text-sm text-muted-foreground">
+            Licença de operação e comprovante do MTR Nacional (SINIR). PDF, JPEG ou PNG até 10 MB.
+          </p>
+        </div>
+
+        <FormField id="operating_license" label="Licença de operação" error={errors.operating_license}>
+          <CurrentDocument file={initialData?.operating_license} />
+          <input
+            id="operating_license"
+            type="file"
+            accept={COMPLIANCE_ACCEPT}
+            required={mode === "create"}
+            className={fileInputClass}
+            onChange={(e) => setOperatingLicense(e.target.files?.[0] ?? null)}
+          />
+        </FormField>
+
+        <FormField id="mtr" label="MTR (Manifesto de Transporte de Resíduos)" error={errors.mtr}>
+          <CurrentDocument file={initialData?.mtr_document} />
+          <input
+            id="mtr"
+            type="file"
+            accept={COMPLIANCE_ACCEPT}
+            required={mode === "create"}
+            className={fileInputClass}
+            onChange={(e) => setMtr(e.target.files?.[0] ?? null)}
+          />
+          <p className="text-xs text-muted-foreground">
+            Comprovante de cadastro no MTR Nacional.{" "}
+            <a
+              href="https://sinir.gov.br/sistemas/mtr/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-primary hover:underline"
+            >
+              Acessar o sistema
+            </a>
+          </p>
+        </FormField>
       </section>
 
       <section className="space-y-4 rounded-xl border border-border/80 bg-card/80 p-6">

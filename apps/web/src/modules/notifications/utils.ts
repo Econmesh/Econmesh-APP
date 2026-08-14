@@ -15,5 +15,8 @@ export function getNotificationHref(notification: UserNotification): Route | nul
     }
     return `/dashboard/acordos/${agreementId}` as Route;
   }
+  if (notification.kind === "compliance") {
+    return "/dashboard/empresas";
+  }
   return null;
 }

@@ -9,6 +9,8 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   account_not_verified: "Confirme seu e-mail antes de entrar.",
   account_disabled: "Conta desativada. Entre em contato com o suporte.",
   email_already_exists: "Este e-mail já está cadastrado.",
+  tax_id_exists: "Já existe uma empresa cadastrada com este CNPJ.",
+  owner_already_has_company: "Este usuário já é responsável por uma empresa.",
   invalid_credentials: "Não foi possível criar a conta. Verifique os dados informados.",
   invalid_verification_token: "Link de confirmação inválido.",
   verification_token_used: "Este link já foi utilizado.",

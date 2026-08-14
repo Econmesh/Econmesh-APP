@@ -20,8 +20,8 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
   { href: "/dashboard", label: "Dashboard", shortLabel: "Início", icon: LayoutDashboard },
   {
     href: "/dashboard/empresas",
-    label: "Empresas",
-    shortLabel: "Empresas",
+    label: "Empresa",
+    shortLabel: "Empresa",
     icon: Building2,
   },
   {

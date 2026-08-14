@@ -55,4 +55,14 @@ export const companiesService = {
       public_url: result.public_url,
     };
   },
+
+  uploadDocument(companyId: string, kind: "operating_license" | "mtr", file: File) {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.upload<Company>(
+      `/companies/${companyId}/documents/${kind}/upload`,
+      formData,
+      { auth: true },
+    );
+  },
 };

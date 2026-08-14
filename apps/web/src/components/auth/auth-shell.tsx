@@ -7,10 +7,12 @@ export function AuthShell({
   title,
   subtitle,
   children,
+  wide = false,
 }: {
   title: string;
   subtitle?: string;
   children: ReactNode;
+  wide?: boolean;
 }) {
   return (
     <div className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden px-4 py-12">
@@ -30,7 +32,7 @@ export function AuthShell({
 
       <Logo size="lg" className="mb-8" />
 
-      <div className="relative w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className={`relative w-full animate-in fade-in slide-in-from-bottom-4 duration-500 ${wide ? "max-w-2xl" : "max-w-md"}`}>
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
           {subtitle ? (

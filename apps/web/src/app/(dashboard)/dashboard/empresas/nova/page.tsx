@@ -15,23 +15,29 @@ export default function NovaEmpresaPage() {
       <div>
         <p className="text-sm text-muted-foreground">
           <Link href="/dashboard/empresas" className="hover:underline">
-            Empresas
+            Empresa
           </Link>
           {" / "}Nova empresa
         </p>
         <h1 className="mt-1 text-2xl font-semibold">Cadastrar empresa</h1>
         <p className="text-sm text-muted-foreground">
-          Preencha os dados da empresa para adicioná-la à sua conta.
+          Preencha os dados da sua empresa. Cada conta pode ter apenas uma empresa.
         </p>
       </div>
 
       <CompanyForm
         mode="create"
         submitLabel="Cadastrar empresa"
-        onSubmit={async (payload) => {
+        onSubmit={async (payload, files) => {
           const company = await companiesService.create(payload);
+          await companiesService.uploadDocument(
+            company.id,
+            "operating_license",
+            files.operating_license,
+          );
+          await companiesService.uploadDocument(company.id, "mtr", files.mtr);
           toast.success("Empresa cadastrada com sucesso.");
-          router.push(`/dashboard/empresas/${company.id}`);
+          router.push("/dashboard/empresas");
         }}
       />
     </div>
