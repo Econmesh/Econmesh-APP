@@ -8,7 +8,12 @@ export function getNotificationHref(notification: UserNotification): Route | nul
     return ticketId ? (`/dashboard/suporte/${ticketId}` as Route) : "/dashboard/suporte";
   }
   if (notification.kind === "agreement") {
-    return "/dashboard/acordos";
+    const agreementId = notification.metadata?.agreement_id;
+    if (!agreementId) return "/dashboard/acordos";
+    if (notification.metadata?.event === "minuta_approved") {
+      return `/dashboard/acordos/${agreementId}` as Route;
+    }
+    return `/dashboard/acordos/${agreementId}` as Route;
   }
   return null;
 }

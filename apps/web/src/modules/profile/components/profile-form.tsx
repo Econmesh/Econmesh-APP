@@ -170,6 +170,9 @@ export function ProfileForm({
         picture_url: photoUrl,
       });
     } catch (error) {
+      // #region agent log
+      fetch('http://127.0.0.1:7321/ingest/0dffd4af-9c1a-46eb-ae81-2c1a98eb0dd9',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'bb369f'},body:JSON.stringify({sessionId:'bb369f',location:'profile-form.tsx:handleSubmit:catch',message:'profile save failed on client',data:{isApiError:error instanceof ApiError,status:error instanceof ApiError ? error.status : null,code:error instanceof ApiError ? error.code : null,errMessage:error instanceof Error ? error.message : String(error),details:error instanceof ApiError ? error.details : null},timestamp:Date.now(),hypothesisId:'D,C,A,B'})}).catch(()=>{});
+      // #endregion
       if (error instanceof ApiError) {
         const fieldErrors = getValidationFieldErrors(error.details);
         if (Object.keys(fieldErrors).length > 0) {

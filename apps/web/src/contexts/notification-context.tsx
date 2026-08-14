@@ -10,10 +10,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import type { Route } from "next";
 import { toast } from "sonner";
 
 import { useAuth } from "@/hooks/use-auth";
+import { MinutaApprovedDialog } from "@/modules/acordos/components/minuta-approved-dialog";
 import { normalizeTicketId } from "@/modules/support/support-realtime";
 import { notificationsService } from "@/services/notifications/notifications.service";
 import type { UserNotification } from "@/types/api";
@@ -41,6 +43,19 @@ function isViewingSupportTicket(pathname: string | null, ticketId: string) {
   return pathname?.toLowerCase() === `/dashboard/suporte/${normalizeTicketId(ticketId)}`;
 }
 
+function isMinutaApprovedNotification(notification: UserNotification) {
+  return (
+    notification.kind === "agreement" &&
+    notification.metadata?.event === "minuta_approved" &&
+    !!notification.metadata?.agreement_id
+  );
+}
+
+type PendingMinutaApproval = {
+  notificationId: string;
+  agreementId: string;
+};
+
 type NotificationContextValue = {
   unreadNotifications: UserNotification[];
   readNotifications: UserNotification[];
@@ -52,6 +67,8 @@ type NotificationContextValue = {
   loadReadNotifications: (options?: { all?: boolean }) => Promise<void>;
   markRead: (id: string) => Promise<void>;
   markAllRead: () => Promise<void>;
+  pendingMinutaApproval: PendingMinutaApproval | null;
+  confirmMinutaApproval: () => Promise<void>;
 };
 
 const NotificationContext = createContext<NotificationContextValue | null>(null);
@@ -59,6 +76,7 @@ const NotificationContext = createContext<NotificationContextValue | null>(null)
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading, user, getIdToken } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
   const pathnameRef = useRef(pathname);
   pathnameRef.current = pathname;
   const [unreadNotifications, setUnreadNotifications] = useState<UserNotification[]>([]);
@@ -67,8 +85,21 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [loadingRead, setLoadingRead] = useState(false);
   const [hasMoreRead, setHasMoreRead] = useState(false);
+  const [pendingMinutaApproval, setPendingMinutaApproval] =
+    useState<PendingMinutaApproval | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const lastKnownCountRef = useRef(0);
+  const handledMinutaApprovalIdsRef = useRef<Set<string>>(new Set());
+
+  const queueMinutaApproval = useCallback((notification: UserNotification) => {
+    if (!isMinutaApprovedNotification(notification)) return;
+    if (handledMinutaApprovalIdsRef.current.has(notification.id)) return;
+    handledMinutaApprovalIdsRef.current.add(notification.id);
+    setPendingMinutaApproval({
+      notificationId: notification.id,
+      agreementId: notification.metadata!.agreement_id,
+    });
+  }, []);
 
   const refresh = useCallback(async (options?: { silent?: boolean }) => {
     if (!isAuthenticated) return;
@@ -82,15 +113,18 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         }),
         notificationsService.unreadCount(),
       ]);
-      setUnreadNotifications(unreadList.items.map(normalizeNotification));
+      const unread = unreadList.items.map(normalizeNotification);
+      setUnreadNotifications(unread);
       setUnreadCount(count.count);
       lastKnownCountRef.current = count.count;
       setReadNotifications([]);
       setHasMoreRead(false);
+      const pending = unread.find(isMinutaApprovedNotification);
+      if (pending) queueMinutaApproval(pending);
     } finally {
       if (!options?.silent) setLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, queueMinutaApproval]);
 
   const pollForUpdates = useCallback(async () => {
     if (!isAuthenticated || document.visibilityState !== "visible") return;
@@ -158,6 +192,18 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     lastKnownCountRef.current = 0;
   }, []);
 
+  const confirmMinutaApproval = useCallback(async () => {
+    const pending = pendingMinutaApproval;
+    if (!pending) return;
+    setPendingMinutaApproval(null);
+    try {
+      await markRead(pending.notificationId);
+    } catch {
+      /* navigation still proceeds */
+    }
+    router.push(`/dashboard/acordos/${pending.agreementId}` as Route);
+  }, [markRead, pendingMinutaApproval, router]);
+
   // Initial load when authenticated
   useEffect(() => {
     if (!isAuthenticated || isLoading || !user) return;
@@ -206,7 +252,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                   lastKnownCountRef.current = next;
                   return next;
                 });
-                toast.info(notification.title, { description: notification.body });
+                if (isMinutaApprovedNotification(notification)) {
+                  queueMinutaApproval(notification);
+                } else {
+                  toast.info(notification.title, { description: notification.body });
+                }
                 return [notification, ...prev];
               });
             }
@@ -226,7 +276,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     return () => {
       controller.abort();
     };
-  }, [isAuthenticated, isLoading, user, getIdToken]);
+  }, [isAuthenticated, isLoading, user, getIdToken, queueMinutaApproval]);
 
   // Polling fallback + refresh when tab becomes visible
   useEffect(() => {
@@ -262,6 +312,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       loadReadNotifications,
       markRead,
       markAllRead,
+      pendingMinutaApproval,
+      confirmMinutaApproval,
     }),
     [
       unreadNotifications,
@@ -274,11 +326,18 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       loadReadNotifications,
       markRead,
       markAllRead,
+      pendingMinutaApproval,
+      confirmMinutaApproval,
     ],
   );
 
   return (
-    <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>
+    <NotificationContext.Provider value={value}>
+      {children}
+      {pendingMinutaApproval ? (
+        <MinutaApprovedDialog onConfirm={() => void confirmMinutaApproval()} />
+      ) : null}
+    </NotificationContext.Provider>
   );
 }
 

@@ -17,12 +17,7 @@ export const OPPORTUNITY_TYPES: {
 		description:
 			"Compra ou venda pontual de resíduos, matérias-primas ou subprodutos.",
 	},
-	{
-		value: "simbiose_industrial",
-		label: "Simbiose Industrial",
-		description:
-			"Conexão contínua entre empresas para troca permanente de materiais ou recursos.",
-	},
+
 	{
 		value: "compartilhamento",
 		label: "Compartilhamento",

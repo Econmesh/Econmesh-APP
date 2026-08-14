@@ -51,6 +51,7 @@ function companyToFormValues(company: Company): CompanyFormValues {
     tax_id: company.tax_id,
     email: company.email ?? "",
     phone: company.phone ?? "",
+    legal_representative: company.legal_representative ?? "",
     address: {
       postal_code: company.address?.postal_code ?? "",
       street: company.address?.street ?? "",
@@ -86,6 +87,7 @@ export function CompanyForm({ mode, initialData, onSubmit, submitLabel }: Compan
       tax_id: "",
       email: "",
       phone: "",
+      legal_representative: "",
       address: {
         postal_code: "",
         street: "",
@@ -267,6 +269,19 @@ export function CompanyForm({ mode, initialData, onSubmit, submitLabel }: Compan
               value={formatPhone(formValues.phone ?? "")}
               onChange={(e) => updateField("phone", e.target.value)}
               aria-invalid={!!errors.phone}
+            />
+          </FormField>
+
+          <FormField
+            id="legal_representative"
+            label="Responsável legal"
+            error={errors.legal_representative}
+          >
+            <FormInput
+              id="legal_representative"
+              value={formValues.legal_representative ?? ""}
+              onChange={(e) => updateField("legal_representative", e.target.value)}
+              aria-invalid={!!errors.legal_representative}
             />
           </FormField>
         </div>
