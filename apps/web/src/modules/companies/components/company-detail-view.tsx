@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@econmesh-app/ui/components/badge";
 import { Button } from "@econmesh-app/ui/components/button";
 import {
   Card,
@@ -8,18 +9,28 @@ import {
   CardHeader,
   CardTitle,
 } from "@econmesh-app/ui/components/card";
-import { Building2, Pencil, Trash2 } from "lucide-react";
+import { Building2, Pencil } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 
-import { DeleteCompanyDialog } from "@/modules/companies/components/delete-company-dialog";
-import { formatCep, formatCnpj, formatPhone } from "@/modules/companies/schemas";
-import type { Company } from "@/types/api";
+import { DocumentStatusBadge } from "@/modules/companies/components/document-status-badge";
+import {
+  COMPLIANCE_ACCEPT,
+  MAX_COMPLIANCE_BYTES,
+  formatCep,
+  formatCnpj,
+  formatPhone,
+  isAllowedComplianceFile,
+} from "@/modules/companies/schemas";
+import { companiesService } from "@/services/companies/companies.service";
+import type { Company, CompanyComplianceFile } from "@/types/api";
+import { ApiError } from "@/utils/errors";
 
 type CompanyDetailViewProps = {
   company: Company;
-  onDeleted: () => void;
+  onUpdated?: (company: Company) => void;
 };
 
 function DetailItem({ label, value }: { label: string; value?: string | null }) {
@@ -32,53 +43,154 @@ function DetailItem({ label, value }: { label: string; value?: string | null }) 
   );
 }
 
-export function CompanyDetailView({ company, onDeleted }: CompanyDetailViewProps) {
-  const [showDelete, setShowDelete] = useState(false);
+function DocumentItem({
+  companyId,
+  kind,
+  label,
+  file,
+  onUpdated,
+}: {
+  companyId: string;
+  kind: "operating_license" | "mtr";
+  label: string;
+  file?: CompanyComplianceFile | null;
+  onUpdated?: (company: Company) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const rejected = file?.status === "rejected";
+
+  async function handleFile(fileToUpload: File, isResend: boolean) {
+    if (!isAllowedComplianceFile(fileToUpload)) {
+      toast.error("Use PDF, JPEG ou PNG.");
+      return;
+    }
+    if (fileToUpload.size > MAX_COMPLIANCE_BYTES) {
+      toast.error("Arquivo deve ter no máximo 10 MB.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const updated = await companiesService.uploadDocument(companyId, kind, fileToUpload);
+      toast.success(
+        isResend ? "Documento reenviado para análise." : "Documento enviado para análise.",
+      );
+      onUpdated?.(updated);
+    } catch (error) {
+      toast.error(
+        error instanceof ApiError
+          ? error.message
+          : isResend
+            ? "Não foi possível reenviar o documento."
+            : "Não foi possível enviar o documento.",
+      );
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  function FilePicker({ buttonLabel, isResend }: { buttonLabel: string; isResend: boolean }) {
+    return (
+      <div>
+        <input
+          ref={inputRef}
+          type="file"
+          accept={COMPLIANCE_ACCEPT}
+          className="hidden"
+          onChange={(e) => {
+            const selected = e.target.files?.[0];
+            if (selected) void handleFile(selected, isResend);
+          }}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={uploading}
+          onClick={() => inputRef.current?.click()}
+        >
+          {uploading ? "Enviando..." : buttonLabel}
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
+      <dd className="mt-1 space-y-2 text-sm">
+        {file ? (
+          <>
+            <div className="flex flex-wrap items-center gap-2">
+              <a
+                href={file.public_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary underline-offset-4 hover:underline"
+              >
+                {file.filename}
+              </a>
+              <DocumentStatusBadge file={file} />
+            </div>
+            {rejected && file.rejection_reason ? (
+              <p className="text-xs text-destructive">Motivo: {file.rejection_reason}</p>
+            ) : null}
+            {rejected ? <FilePicker buttonLabel="Enviar novamente" isResend /> : null}
+          </>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-muted-foreground">Não enviado</span>
+              <Badge variant="warning">Pendente</Badge>
+            </div>
+            <FilePicker buttonLabel="Anexar" isResend={false} />
+          </div>
+        )}
+      </dd>
+    </div>
+  );
+}
+
+export function CompanyDetailView({ company, onUpdated }: CompanyDetailViewProps) {
   const address = company.address;
 
   return (
-    <>
-      <div className="space-y-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="relative size-16 overflow-hidden rounded-xl border border-border bg-muted">
-              {company.logo_url ? (
-                <Image
-                  src={company.logo_url}
-                  alt={`Logo de ${company.legal_name}`}
-                  fill
-                  className="object-contain p-1"
-                  unoptimized
-                />
-              ) : (
-                <div className="flex size-full items-center justify-center">
-                  <Building2 className="size-6 text-muted-foreground" aria-hidden />
-                </div>
-              )}
-            </div>
-            <div>
-              <h1 className="text-2xl font-semibold">{company.legal_name}</h1>
-              <p className="text-muted-foreground">
-                {company.trade_name || "Sem nome fantasia"}
-              </p>
-            </div>
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex items-start gap-4">
+          <div className="relative size-16 overflow-hidden rounded-xl border border-border bg-muted">
+            {company.logo_url ? (
+              <Image
+                src={company.logo_url}
+                alt={`Logo de ${company.legal_name}`}
+                fill
+                className="object-contain p-1"
+                unoptimized
+              />
+            ) : (
+              <div className="flex size-full items-center justify-center">
+                <Building2 className="size-6 text-muted-foreground" aria-hidden />
+              </div>
+            )}
           </div>
-
-          <div className="flex flex-wrap gap-2">
-            <Link href={`/dashboard/empresas/${company.id}/editar`} className="inline-flex">
-              <Button variant="outline">
-                <Pencil className="size-4" aria-hidden />
-                Editar
-              </Button>
-            </Link>
-            <Button variant="destructive" onClick={() => setShowDelete(true)}>
-              <Trash2 className="size-4" aria-hidden />
-              Excluir
-            </Button>
+          <div>
+            <h1 className="text-2xl font-semibold">{company.legal_name}</h1>
+            <p className="text-muted-foreground">
+              {company.trade_name || "Sem nome fantasia"}
+            </p>
           </div>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
+        <Link href={`/dashboard/empresas/${company.id}/editar`} className="inline-flex">
+          <Button variant="outline">
+            <Pencil className="size-4" aria-hidden />
+            Editar
+          </Button>
+        </Link>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
           <Card className="rounded-xl">
             <CardHeader>
               <CardTitle>Dados básicos</CardTitle>
@@ -118,6 +230,31 @@ export function CompanyDetailView({ company, onDeleted }: CompanyDetailViewProps
 
           <Card className="rounded-xl lg:col-span-2">
             <CardHeader>
+              <CardTitle>Documentos</CardTitle>
+              <CardDescription>Licença de operação e comprovante MTR.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <dl className="grid gap-4 sm:grid-cols-2">
+                <DocumentItem
+                  companyId={company.id}
+                  kind="operating_license"
+                  label="Licença de operação"
+                  file={company.operating_license}
+                  onUpdated={onUpdated}
+                />
+                <DocumentItem
+                  companyId={company.id}
+                  kind="mtr"
+                  label="MTR"
+                  file={company.mtr_document}
+                  onUpdated={onUpdated}
+                />
+              </dl>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-xl lg:col-span-2">
+            <CardHeader>
               <CardTitle>Informações adicionais</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -140,14 +277,6 @@ export function CompanyDetailView({ company, onDeleted }: CompanyDetailViewProps
             </CardContent>
           </Card>
         </div>
-      </div>
-
-      <DeleteCompanyDialog
-        company={company}
-        open={showDelete}
-        onOpenChange={setShowDelete}
-        onDeleted={onDeleted}
-      />
-    </>
+    </div>
   );
 }

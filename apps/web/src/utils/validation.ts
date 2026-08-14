@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { companyCreateSchema } from "@/modules/companies/schemas";
+
 const passwordSchema = z
   .string()
   .min(8, "Mínimo de 8 caracteres.")
@@ -9,7 +11,16 @@ const passwordSchema = z
   .regex(/[0-9]/, "Inclua ao menos um número.")
   .regex(/[^A-Za-z0-9]/, "Inclua ao menos um caractere especial.");
 
-export const registerSchema = z
+export const registerCompanySchema = companyCreateSchema.pick({
+  legal_name: true,
+  trade_name: true,
+  tax_id: true,
+  email: true,
+  phone: true,
+  address: true,
+});
+
+export const registerUserSchema = z
   .object({
     full_name: z
       .string()
@@ -24,6 +35,10 @@ export const registerSchema = z
     message: "As senhas não coincidem.",
     path: ["password_confirm"],
   });
+
+export const registerSchema = registerUserSchema.and(
+  z.object({ company: registerCompanySchema }),
+);
 
 export const loginSchema = z.object({
   email: z.string().email("E-mail inválido."),
@@ -44,5 +59,7 @@ export const resetPasswordSchema = z
     path: ["password_confirm"],
   });
 
+export type RegisterCompanyValues = z.infer<typeof registerCompanySchema>;
+export type RegisterUserValues = z.infer<typeof registerUserSchema>;
 export type RegisterFormValues = z.infer<typeof registerSchema>;
 export type LoginFormValues = z.infer<typeof loginSchema>;

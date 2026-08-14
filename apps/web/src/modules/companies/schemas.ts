@@ -24,13 +24,13 @@ function isValidCnpj(cnpj: string): boolean {
 }
 
 const addressSchema = z.object({
-  postal_code: z.string().max(12).optional().or(z.literal("")),
-  street: z.string().max(200).optional().or(z.literal("")),
-  number: z.string().max(20).optional().or(z.literal("")),
+  postal_code: z.string().trim().min(8, "Informe o CEP.").max(12),
+  street: z.string().trim().min(2, "Informe a rua.").max(200),
+  number: z.string().trim().min(1, "Informe o número.").max(20),
   complement: z.string().max(100).optional().or(z.literal("")),
   neighborhood: z.string().max(100).optional().or(z.literal("")),
-  city: z.string().max(100).optional().or(z.literal("")),
-  state: z.string().max(2).optional().or(z.literal("")),
+  city: z.string().trim().min(2, "Informe a cidade.").max(100),
+  state: z.string().length(2, "Informe o estado."),
 });
 
 const baseCompanyFields = {
@@ -42,10 +42,15 @@ const baseCompanyFields = {
     .min(5, "Informe o CNPJ.")
     .max(20)
     .refine(isValidCnpj, "CNPJ inválido."),
-  email: z.string().trim().email("E-mail inválido.").optional().or(z.literal("")),
-  phone: z.string().trim().max(30).optional().or(z.literal("")),
+  email: z.string().trim().email("E-mail inválido."),
+  phone: z
+    .string()
+    .trim()
+    .min(8, "Informe o telefone.")
+    .max(30)
+    .refine((value) => stripNonDigits(value).length >= 8, "Informe o telefone."),
   legal_representative: z.string().trim().max(200).optional().or(z.literal("")),
-  address: addressSchema.optional(),
+  address: addressSchema,
   country: z.string().length(2).default("BR"),
   website: z
     .string()
@@ -65,11 +70,42 @@ export const companyUpdateSchema = z.object({
   email: baseCompanyFields.email,
   phone: baseCompanyFields.phone,
   legal_representative: baseCompanyFields.legal_representative,
-  address: addressSchema.optional(),
+  address: addressSchema,
   website: baseCompanyFields.website,
   description: baseCompanyFields.description,
   sector: baseCompanyFields.sector,
 });
+
+export type CompanyDocumentFiles = {
+  operating_license?: File | null;
+  mtr?: File | null;
+};
+
+export const BRAZILIAN_STATES = [
+  "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
+  "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
+  "RS", "RO", "RR", "SC", "SP", "SE", "TO",
+] as const;
+
+export const COMPLIANCE_ACCEPT = "application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png";
+export const MAX_COMPLIANCE_BYTES = 10 * 1024 * 1024;
+
+export const COMPLIANCE_STATUS_LABELS: Record<string, string> = {
+  pending: "Sendo Analisado...",
+  approved: "Aprovado",
+  rejected: "Rejeitado",
+};
+
+export function complianceStatus(file?: { status?: string | null } | null): string {
+  return file?.status || "pending";
+}
+
+export function isAllowedComplianceFile(file: File): boolean {
+  const type = file.type.toLowerCase();
+  if (["application/pdf", "image/jpeg", "image/png"].includes(type)) return true;
+  const name = file.name.toLowerCase();
+  return name.endsWith(".pdf") || name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".png");
+}
 
 export type CompanyFormValues = z.infer<typeof companyCreateSchema>;
 

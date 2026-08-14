@@ -22,7 +22,7 @@ import { toast } from "sonner";
 
 import { getPasswordResetActionUrl } from "@/lib/auth-urls";
 import { getFirebaseAuth } from "@/lib/firebase";
-import { authService } from "@/services/auth/auth.service";
+import { authService, type RegisterCompanyPayload } from "@/services/auth/auth.service";
 import { supportService } from "@/services/support/support.service";
 import {
   setApiTokenProvider,
@@ -39,6 +39,9 @@ interface AuthContextValue {
     email: string;
     password: string;
     password_confirm: string;
+    company: RegisterCompanyPayload;
+    operating_license: File;
+    mtr: File;
   }) => Promise<RegisterResponse>;
   signOutUser: () => Promise<void>;
   verifyAccount: (token: string) => Promise<void>;
@@ -177,6 +180,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: string;
       password: string;
       password_confirm: string;
+      company: RegisterCompanyPayload;
+      operating_license: File;
+      mtr: File;
     }) => {
       const response = await authService.register(payload);
       sessionStorage.setItem("econmesh_pending_email", payload.email);

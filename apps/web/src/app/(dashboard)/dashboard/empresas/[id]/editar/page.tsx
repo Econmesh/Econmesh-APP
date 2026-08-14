@@ -54,11 +54,7 @@ export default function EditarEmpresaPage() {
       <div>
         <p className="text-sm text-muted-foreground">
           <Link href="/dashboard/empresas" className="hover:underline">
-            Empresas
-          </Link>
-          {" / "}
-          <Link href={`/dashboard/empresas/${company.id}`} className="hover:underline">
-            {company.legal_name}
+            Empresa
           </Link>
           {" / "}Editar
         </p>
@@ -72,10 +68,20 @@ export default function EditarEmpresaPage() {
         mode="edit"
         initialData={company}
         submitLabel="Salvar alterações"
-        onSubmit={async (payload) => {
+        onSubmit={async (payload, files) => {
           await companiesService.update(company.id, payload);
+          if (files.operating_license) {
+            await companiesService.uploadDocument(
+              company.id,
+              "operating_license",
+              files.operating_license,
+            );
+          }
+          if (files.mtr) {
+            await companiesService.uploadDocument(company.id, "mtr", files.mtr);
+          }
           toast.success("Empresa atualizada com sucesso.");
-          router.push(`/dashboard/empresas/${company.id}`);
+          router.push("/dashboard/empresas");
         }}
       />
     </div>
