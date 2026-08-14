@@ -73,10 +73,12 @@ export default function RegisterPage() {
   const [mtr, setMtr] = useState<File | null>(null);
   const { lookup: lookupCep, loading: cepLoading } = useCepLookup();
 
-  function applyIssues(issues: { path: (string | number)[]; message: string }[]) {
+  function applyIssues(issues: ReadonlyArray<{ path: readonly PropertyKey[]; message: string }>) {
     const fieldErrors: Partial<Record<FieldKey, string>> = {};
     for (const issue of issues) {
-      const key = issue.path.join(".");
+      const key = issue.path
+        .filter((segment): segment is string | number => typeof segment !== "symbol")
+        .join(".");
       if (key) fieldErrors[key] = issue.message;
     }
     setErrors(fieldErrors);

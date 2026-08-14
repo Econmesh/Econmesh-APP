@@ -22,6 +22,8 @@ import {
 } from "@/modules/acordos/constants";
 import { agreementsService } from "@/services/acordos/acordos.service";
 import { ApiError } from "@/utils/errors";
+import type { PDFDocumentProxy } from "pdfjs-dist";
+
 import type {
 	Agreement,
 	AgreementField,
@@ -33,18 +35,6 @@ type EditorField = AgreementField & { localId: string };
 
 type PageSize = { width: number; height: number };
 
-type PdfDocument = {
-	numPages: number;
-	getPage: (pageNumber: number) => Promise<{
-		getViewport: (params: { scale: number }) => { width: number; height: number };
-		render: (params: {
-			canvasContext: CanvasRenderingContext2D;
-			viewport: { width: number; height: number };
-			canvas: HTMLCanvasElement;
-		}) => { promise: Promise<void> };
-	}>;
-};
-
 const FIELD_TYPES = Object.keys(FIELD_TYPE_LABELS) as AgreementFieldType[];
 const PDF_SCALE = 1.25;
 
@@ -55,7 +45,7 @@ export default function AcordoCamposPage() {
 
 	const canvasRefs = useRef<Map<number, HTMLCanvasElement>>(new Map());
 	const pageContainerRefs = useRef<Map<number, HTMLDivElement>>(new Map());
-	const pdfDocRef = useRef<PdfDocument | null>(null);
+	const pdfDocRef = useRef<PDFDocumentProxy | null>(null);
 	const suppressClickRef = useRef(false);
 	const renderGenerationRef = useRef(0);
 
@@ -93,7 +83,7 @@ export default function AcordoCamposPage() {
 
 			canvas.width = viewport.width;
 			canvas.height = viewport.height;
-			await pdfPage.render({ canvasContext: context, viewport, canvas }).promise;
+			await pdfPage.render({ canvasContext: context, viewport }).promise;
 		}
 
 		if (generation === renderGenerationRef.current) {
@@ -134,8 +124,7 @@ export default function AcordoCamposPage() {
 					agreementId,
 					"original",
 				);
-				const pdf = (await pdfjs.getDocument({ data: pdfBytes })
-					.promise) as PdfDocument;
+				const pdf = await pdfjs.getDocument({ data: pdfBytes }).promise;
 				if (cancelled) return;
 				pdfDocRef.current = pdf;
 				setPageCount(pdf.numPages);
