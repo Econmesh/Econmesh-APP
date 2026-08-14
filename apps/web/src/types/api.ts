@@ -852,3 +852,111 @@ export interface ContractSectionTemplateListResponse {
   page: number;
   page_size: number;
 }
+
+export type BillingPlanCycle = "MONTHLY" | "YEARLY";
+export type BillingType = "PIX" | "BOLETO" | "CREDIT_CARD";
+export type CouponDiscountType = "PERCENTAGE" | "FIXED";
+export type SubscriptionStatus =
+  | "pending"
+  | "trialing"
+  | "active"
+  | "past_due"
+  | "cancelled"
+  | "expired";
+export type InvoiceStatus =
+  | "pending"
+  | "confirmed"
+  | "received"
+  | "overdue"
+  | "refunded"
+  | "deleted"
+  | "other";
+
+export interface BillingPlan {
+  id: string;
+  name: string;
+  description: string | null;
+  features: string[];
+  price: number;
+  cycle: BillingPlanCycle;
+  is_active: boolean;
+  sort_order: number;
+  trial_days: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BillingPlanListResponse {
+  items: BillingPlan[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface BillingSubscription {
+  id: string;
+  company_id: string;
+  user_id: string;
+  plan_id: string;
+  plan_name: string | null;
+  status: SubscriptionStatus;
+  billing_type: BillingType;
+  coupon_code: string | null;
+  price: number;
+  cycle: BillingPlanCycle;
+  checkout_url: string | null;
+  invoice_url: string | null;
+  trial_ends_at: string | null;
+  current_period_end: string | null;
+  cancelled_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BillingMe {
+  status: SubscriptionStatus;
+  has_access: boolean;
+  is_admin: boolean;
+  company_id: string | null;
+  subscription: BillingSubscription | null;
+  trial_enabled: boolean;
+  trial_days: number;
+  allowed_billing_types: BillingType[];
+}
+
+export interface CouponValidateResponse {
+  code: string;
+  discount_type: CouponDiscountType;
+  discount_value: number;
+  original_price: number;
+  discounted_price: number;
+}
+
+export interface SubscribeResponse {
+  subscription: BillingSubscription;
+  checkout_url: string | null;
+  invoice_url: string | null;
+}
+
+export interface BillingInvoice {
+  id: string;
+  subscription_id: string;
+  value: number;
+  due_date: string | null;
+  status: InvoiceStatus;
+  asaas_status: string | null;
+  billing_type: string | null;
+  invoice_url: string | null;
+  bank_slip_url: string | null;
+  pix_qr_code: string | null;
+  pix_copy_paste: string | null;
+  paid_at: string | null;
+  created_at: string;
+}
+
+export interface BillingInvoiceListResponse {
+  items: BillingInvoice[];
+  total: number;
+  page: number;
+  page_size: number;
+}
