@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@econmesh-app/ui/components/dropdown-menu";
-import { LogOut, Settings, User } from "lucide-react";
+import { CreditCard, LogOut, Settings, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -91,6 +91,10 @@ export function DashboardHeader() {
           <DropdownMenuItem render={<Link href="/profile" />} onClick={() => setMenuOpen(false)}>
             <User className="size-4" />
             Meu Perfil
+          </DropdownMenuItem>
+          <DropdownMenuItem render={<Link href="/dashboard/assinatura" />} onClick={() => setMenuOpen(false)}>
+            <CreditCard className="size-4" />
+            Assinatura
           </DropdownMenuItem>
           <DropdownMenuItem render={<Link href="/settings" />} onClick={() => setMenuOpen(false)}>
             <Settings className="size-4" />

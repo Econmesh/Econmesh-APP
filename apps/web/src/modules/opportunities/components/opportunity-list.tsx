@@ -8,15 +8,16 @@ import { EmptyState } from "@/components/feedback/empty-state";
 import { MatchingModal } from "@/modules/opportunities/components/matching-modal";
 import { OpportunityCard } from "@/modules/opportunities/components/opportunity-card";
 import { OpportunityListSkeleton } from "@/modules/opportunities/components/opportunity-card-skeleton";
-import type { Opportunity } from "@/types/api";
+import type { Opportunity, OpportunityPreview } from "@/types/api";
 
 type OpportunityListProps = {
-	opportunities: Opportunity[];
+	opportunities: Array<Opportunity | OpportunityPreview>;
 	loading: boolean;
 	loadingMore: boolean;
 	hasMore: boolean;
 	total: number;
 	hasDemands?: boolean;
+	locked?: boolean;
 	onLoadMore: () => void;
 };
 
@@ -27,6 +28,7 @@ export function OpportunityList({
 	hasMore,
 	total,
 	hasDemands = false,
+	locked = false,
 	onLoadMore,
 }: OpportunityListProps) {
 	const sentinelRef = useRef<HTMLDivElement>(null);
@@ -76,6 +78,7 @@ export function OpportunityList({
 					<OpportunityCard
 						key={opportunity.id}
 						opportunity={opportunity}
+						locked={locked}
 						hasDemands={hasDemands}
 						onMatchClick={setSelectedOpportunity}
 					/>

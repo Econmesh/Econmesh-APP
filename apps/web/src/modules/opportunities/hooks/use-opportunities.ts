@@ -4,16 +4,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { OPPORTUNITY_LIST_PAGE_SIZE } from "@/modules/opportunities/constants";
 import { opportunitiesService } from "@/services/opportunities/opportunities.service";
-import type { Opportunity, OpportunityListParams } from "@/types/api";
+import type { Opportunity, OpportunityListParams, OpportunityPreview } from "@/types/api";
 import { ApiError } from "@/utils/errors";
 
 type UseOpportunitiesResult = {
-	opportunities: Opportunity[];
+	opportunities: Array<Opportunity | OpportunityPreview>;
 	loading: boolean;
 	loadingMore: boolean;
 	error: string | null;
 	hasMore: boolean;
 	hasDemands: boolean;
+	isPreview: boolean;
 	total: number;
 	loadMore: () => void;
 	refresh: () => void;
@@ -22,12 +23,15 @@ type UseOpportunitiesResult = {
 export function useOpportunities(
 	params: OpportunityListParams,
 ): UseOpportunitiesResult {
-	const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+	const [opportunities, setOpportunities] = useState<
+		Array<Opportunity | OpportunityPreview>
+	>([]);
 	const [loading, setLoading] = useState(true);
 	const [loadingMore, setLoadingMore] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [hasMore, setHasMore] = useState(false);
 	const [hasDemands, setHasDemands] = useState(false);
+	const [isPreview, setIsPreview] = useState(false);
 	const [total, setTotal] = useState(0);
 	const [page, setPage] = useState(1);
 	const paramsRef = useRef(params);
@@ -53,6 +57,7 @@ export function useOpportunities(
 				);
 				setHasMore(response.has_more);
 				setHasDemands(response.has_demands ?? false);
+				setIsPreview(response.is_preview ?? false);
 				setTotal(response.total);
 				setPage(pageToLoad);
 			} catch (err) {
@@ -98,6 +103,7 @@ export function useOpportunities(
 		error,
 		hasMore,
 		hasDemands,
+		isPreview,
 		total,
 		loadMore,
 		refresh,

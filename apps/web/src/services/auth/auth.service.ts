@@ -27,7 +27,7 @@ export const authService = {
     phone?: string | null;
     company: RegisterCompanyPayload;
     operating_license: File;
-    mtr: File;
+    mtr?: File | null;
   }) {
     const formData = new FormData();
     formData.append(
@@ -42,7 +42,9 @@ export const authService = {
       }),
     );
     formData.append("operating_license", body.operating_license);
-    formData.append("mtr", body.mtr);
+    if (body.mtr) {
+      formData.append("mtr", body.mtr);
+    }
     return api.upload<RegisterResponse>("/auth/register", formData);
   },
 

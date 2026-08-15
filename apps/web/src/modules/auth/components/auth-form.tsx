@@ -3,6 +3,7 @@
 import { Button } from "@econmesh-app/ui/components/button";
 import { Input } from "@econmesh-app/ui/components/input";
 import { Label } from "@econmesh-app/ui/components/label";
+import { cn } from "@econmesh-app/ui/lib/utils";
 import { Loader2 } from "lucide-react";
 import { useState, type ComponentProps, type FormEvent, type ReactNode } from "react";
 
@@ -12,12 +13,14 @@ export function AuthForm({
   submitLabel,
   loading,
   footer,
+  className,
 }: {
   onSubmit: (event: FormEvent<HTMLFormElement>) => void | Promise<void>;
   children: ReactNode;
   submitLabel: string;
   loading?: boolean;
   footer?: ReactNode;
+  className?: string;
 }) {
   return (
     <form
@@ -25,7 +28,10 @@ export function AuthForm({
         e.preventDefault();
         void onSubmit(e);
       }}
-      className="space-y-4 rounded-xl border border-border/80 bg-card/80 p-6 shadow-lg backdrop-blur-sm"
+      className={cn(
+        "space-y-4 rounded-xl border border-border/80 bg-card/80 p-6 shadow-lg backdrop-blur-sm",
+        className,
+      )}
       noValidate
     >
       {children}

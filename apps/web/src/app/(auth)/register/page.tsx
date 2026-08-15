@@ -15,10 +15,10 @@ import {
   FormInput,
   useFormErrors,
 } from "@/modules/auth/components/auth-form";
+import { DocumentUploadField } from "@/modules/auth/components/document-upload-field";
 import { useCepLookup } from "@/modules/companies/hooks/use-cep-lookup";
 import {
   BRAZILIAN_STATES,
-  COMPLIANCE_ACCEPT,
   MAX_COMPLIANCE_BYTES,
   formatCep,
   formatCnpj,
@@ -124,11 +124,9 @@ export default function RegisterPage() {
     setStep(2);
   }
 
-  function validateFile(file: File | null, field: "operating_license" | "mtr"): string | null {
+  function validateFile(file: File | null, required: boolean): string | null {
     if (!file) {
-      return field === "operating_license"
-        ? "Envie a licença de operação."
-        : "Envie o comprovante do MTR.";
+      return required ? "Envie a licença de operação." : null;
     }
     if (!isAllowedComplianceFile(file)) return "Use PDF, JPEG ou PNG.";
     if (file.size > MAX_COMPLIANCE_BYTES) return "Arquivo deve ter no máximo 10 MB.";
@@ -137,8 +135,8 @@ export default function RegisterPage() {
 
   function handleDocumentsContinue() {
     clear();
-    const licenseError = validateFile(operatingLicense, "operating_license");
-    const mtrError = validateFile(mtr, "mtr");
+    const licenseError = validateFile(operatingLicense, true);
+    const mtrError = validateFile(mtr, false);
     if (licenseError || mtrError) {
       setErrors({
         ...(licenseError ? { operating_license: licenseError } : {}),
@@ -162,9 +160,9 @@ export default function RegisterPage() {
       setStep(1);
       return;
     }
-    const licenseError = validateFile(operatingLicense, "operating_license");
-    const mtrError = validateFile(mtr, "mtr");
-    if (licenseError || mtrError || !operatingLicense || !mtr) {
+    const licenseError = validateFile(operatingLicense, true);
+    const mtrError = validateFile(mtr, false);
+    if (licenseError || mtrError || !operatingLicense) {
       setErrors({
         ...(licenseError ? { operating_license: licenseError } : {}),
         ...(mtrError ? { mtr: mtrError } : {}),
@@ -194,7 +192,7 @@ export default function RegisterPage() {
           },
         },
         operating_license: operatingLicense,
-        mtr,
+        mtr: mtr ?? undefined,
       });
       toast.success(response.message);
       router.push(
@@ -359,6 +357,7 @@ export default function RegisterPage() {
       ) : null}
       {step === 2 ? (
         <AuthForm
+          className="space-y-6 p-8"
           onSubmit={handleDocumentsContinue}
           submitLabel="Continuar"
           footer={
@@ -367,48 +366,45 @@ export default function RegisterPage() {
             </Button>
           }
         >
-          <FormField
-            id="operating_license"
-            label="Licença de operação"
-            error={errors.operating_license}
-          >
-            <input
+          <div className="space-y-1.5">
+            <h2 className="text-lg font-semibold tracking-tight">Documentos da empresa</h2>
+            {/* <p className="text-sm leading-relaxed text-muted-foreground">
+              Envie a Licença Ambiental de Operação (LO). O MTR é opcional e pode ser
+              adicionado depois.
+            </p> */}
+          </div>
+          <div className="space-y-8">
+            <DocumentUploadField
               id="operating_license"
-              type="file"
-              accept={COMPLIANCE_ACCEPT}
+              title="Licença Ambiental de Operação (LO)"
+              description="Documento ambiental vigente da empresa."
               required
-              className="block w-full text-sm file:mr-3 file:rounded-md file:border file:border-input file:bg-background file:px-3 file:py-1.5"
-              onChange={(e) => setOperatingLicense(e.target.files?.[0] ?? null)}
+              file={operatingLicense}
+              error={errors.operating_license}
+              onChange={setOperatingLicense}
             />
-            <p className="text-xs text-muted-foreground">
-              PDF, JPEG ou PNG até 10 MB. Documento ambiental vigente.
-            </p>
-            {operatingLicense ? (
-              <p className="text-xs text-foreground">{operatingLicense.name}</p>
-            ) : null}
-          </FormField>
-          <FormField id="mtr" label="MTR (Manifesto de Transporte de Resíduos)" error={errors.mtr}>
-            <input
+            {/* <DocumentUploadField
               id="mtr"
-              type="file"
-              accept={COMPLIANCE_ACCEPT}
-              required
-              className="block w-full text-sm file:mr-3 file:rounded-md file:border file:border-input file:bg-background file:px-3 file:py-1.5"
-              onChange={(e) => setMtr(e.target.files?.[0] ?? null)}
-            />
-            <p className="text-xs text-muted-foreground">
-              Comprovante de cadastro no MTR Nacional – SINIR.{" "}
-              <a
-                href="https://sinir.gov.br/sistemas/mtr/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-primary hover:underline"
-              >
-                Acessar o sistema
-              </a>
-            </p>
-            {mtr ? <p className="text-xs text-foreground">{mtr.name}</p> : null}
-          </FormField>
+              title="MTR (Manifesto de Transporte de Resíduos)"
+              description="Comprovante de cadastro no MTR Nacional – SINIR."
+              file={mtr}
+              error={errors.mtr}
+              onChange={setMtr}
+              hint={
+                <>
+                  Não tem o comprovante agora? Você pode enviar depois.{" "}
+                  <a
+                    href="https://sinir.gov.br/sistemas/mtr/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-primary hover:underline"
+                  >
+                    Acessar o sistema
+                  </a>
+                </>
+              }
+            /> */}
+          </div>
         </AuthForm>
       ) : null}
       {step === 3 ? (

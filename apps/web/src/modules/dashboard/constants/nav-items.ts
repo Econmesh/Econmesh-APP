@@ -1,5 +1,6 @@
 import {
   Building2,
+  CreditCard,
   Handshake,
   Headphones,
   LayoutDashboard,
@@ -37,6 +38,7 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
     icon: MessageCircle,
   },
   { href: "/dashboard/acordos", label: "Acordos", shortLabel: "Acordos", icon: Handshake },
+  { href: "/dashboard/assinatura", label: "Assinatura", shortLabel: "Plano", icon: CreditCard },
   { href: "/dashboard/suporte", label: "Suporte", shortLabel: "Suporte", icon: Headphones },
 ];
 

@@ -201,16 +201,21 @@ export interface OpportunityImage {
   sort_order: number;
 }
 
-export interface Opportunity {
+export interface OpportunityPreview {
   id: string;
-  company_id: string;
-  company_name: string;
-  owner_user_id: string;
   title: string;
-  description: string;
+  images: OpportunityImage[];
   opportunity_type: OpportunityType;
   offer_demand: OfferDemand;
   category: string;
+  locked?: boolean;
+}
+
+export interface Opportunity extends OpportunityPreview {
+  company_id: string;
+  company_name: string;
+  owner_user_id: string;
+  description: string;
   technical_detail: string;
   purity_percent: number | null;
   physical_state: string;
@@ -223,7 +228,6 @@ export interface Opportunity {
   state: string;
   latitude?: number | null;
   longitude?: number | null;
-  images: OpportunityImage[];
   created_at: string;
   updated_at: string;
   matching?: OpportunityMatch | null;
@@ -266,12 +270,13 @@ export interface OpportunityListParams {
 }
 
 export interface OpportunityListResponse {
-  items: Opportunity[];
+  items: Array<Opportunity | OpportunityPreview>;
   total: number;
   page: number;
   page_size: number;
   has_more: boolean;
   has_demands: boolean;
+  is_preview?: boolean;
 }
 
 export interface OpportunityCreatePayload {
@@ -739,6 +744,7 @@ export interface OpportunitySnapshot {
   price_negotiable: boolean;
   periodicity: string | null;
   prazo: string | null;
+  opportunity_type?: string | null;
 }
 
 export interface ProposalSection {
@@ -793,6 +799,7 @@ export interface ContractProposalListItem {
   title: string;
   status: ContractProposalStatus;
   contract_type: ContractType;
+  opportunity_type?: string | null;
   agreement_id: string | null;
   created_at: string;
   updated_at: string;
@@ -838,6 +845,7 @@ export interface ContractSectionTemplate {
   title: string;
   content_html: string;
   contract_type: ContractType | "oportunidades" | "todos";
+  opportunity_types?: OpportunityType[];
   sort_order: number;
   created_by: string;
   is_active: boolean;
@@ -848,6 +856,115 @@ export interface ContractSectionTemplate {
 
 export interface ContractSectionTemplateListResponse {
   items: ContractSectionTemplate[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export type BillingPlanCycle = "MONTHLY" | "YEARLY";
+export type BillingType = "PIX" | "BOLETO" | "CREDIT_CARD";
+export type CouponDiscountType = "PERCENTAGE" | "FIXED";
+export type SubscriptionStatus =
+  | "pending"
+  | "trialing"
+  | "active"
+  | "past_due"
+  | "cancelled"
+  | "expired";
+export type InvoiceStatus =
+  | "pending"
+  | "confirmed"
+  | "received"
+  | "overdue"
+  | "refunded"
+  | "deleted"
+  | "other";
+
+export interface BillingPlan {
+  id: string;
+  name: string;
+  description: string | null;
+  features: string[];
+  price: number;
+  cycle: BillingPlanCycle;
+  is_active: boolean;
+  sort_order: number;
+  trial_days: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BillingPlanListResponse {
+  items: BillingPlan[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface BillingSubscription {
+  id: string;
+  company_id: string;
+  user_id: string;
+  plan_id: string;
+  plan_name: string | null;
+  status: SubscriptionStatus;
+  billing_type: BillingType;
+  coupon_code: string | null;
+  price: number;
+  cycle: BillingPlanCycle;
+  checkout_url: string | null;
+  invoice_url: string | null;
+  trial_ends_at: string | null;
+  current_period_end: string | null;
+  cancelled_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BillingMe {
+  status: SubscriptionStatus;
+  has_access: boolean;
+  is_admin: boolean;
+  company_id: string | null;
+  subscription: BillingSubscription | null;
+  access_grant_expires_at?: string | null;
+  trial_enabled: boolean;
+  trial_days: number;
+  allowed_billing_types: BillingType[];
+}
+
+export interface CouponValidateResponse {
+  code: string;
+  discount_type: CouponDiscountType;
+  discount_value: number;
+  original_price: number;
+  discounted_price: number;
+}
+
+export interface SubscribeResponse {
+  subscription: BillingSubscription;
+  checkout_url: string | null;
+  invoice_url: string | null;
+}
+
+export interface BillingInvoice {
+  id: string;
+  subscription_id: string;
+  value: number;
+  due_date: string | null;
+  status: InvoiceStatus;
+  asaas_status: string | null;
+  billing_type: string | null;
+  invoice_url: string | null;
+  bank_slip_url: string | null;
+  pix_qr_code: string | null;
+  pix_copy_paste: string | null;
+  paid_at: string | null;
+  created_at: string;
+}
+
+export interface BillingInvoiceListResponse {
+  items: BillingInvoice[];
   total: number;
   page: number;
   page_size: number;
