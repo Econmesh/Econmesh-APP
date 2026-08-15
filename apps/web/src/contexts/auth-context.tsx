@@ -41,7 +41,7 @@ interface AuthContextValue {
     password_confirm: string;
     company: RegisterCompanyPayload;
     operating_license: File;
-    mtr: File;
+    mtr?: File | null;
   }) => Promise<RegisterResponse>;
   signOutUser: () => Promise<void>;
   verifyAccount: (token: string) => Promise<void>;
@@ -182,7 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password_confirm: string;
       company: RegisterCompanyPayload;
       operating_license: File;
-      mtr: File;
+      mtr?: File | null;
     }) => {
       const response = await authService.register(payload);
       sessionStorage.setItem("econmesh_pending_email", payload.email);
