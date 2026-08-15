@@ -12,12 +12,12 @@ import { toast } from "sonner";
 import { FormField, useFormErrors } from "@/modules/auth/components/auth-form";
 import { FormFieldWithTooltip } from "@/modules/opportunities/components/form-field-tooltip";
 import { OpportunityImageUpload } from "@/modules/opportunities/components/opportunity-image-upload";
+import { OpportunityTypeBadge } from "@/modules/opportunities/components/opportunity-type-badge";
 import { TechnicalDetailInput } from "@/modules/opportunities/components/technical-detail-input";
 import {
 	BRAZILIAN_STATES,
 	OFFER_DEMAND_OPTIONS,
 	OPPORTUNITY_CATEGORIES,
-	OPPORTUNITY_TYPES,
 	PERIODICITY_OPTIONS,
 	PHYSICAL_STATES,
 	UNIT_OPTIONS,
@@ -35,11 +35,15 @@ import type {
 	Opportunity,
 	OpportunityCreatePayload,
 	OpportunityImage,
+	OpportunityType,
 	OpportunityUpdatePayload,
 } from "@/types/api";
 import { ApiError, getValidationFieldErrors } from "@/utils/errors";
 
-type OpportunityFormProps =
+type OpportunityFormProps = {
+	opportunityType?: OpportunityType;
+	onChangeType?: () => void;
+} & (
 	| {
 			mode: "create";
 			initialData?: never;
@@ -51,7 +55,8 @@ type OpportunityFormProps =
 			initialData: Opportunity;
 			onSubmit: (payload: OpportunityUpdatePayload) => Promise<void>;
 			submitLabel: string;
-	  };
+	  }
+);
 
 const defaultValues: OpportunityFormValues = {
 	company_id: "",
@@ -106,6 +111,8 @@ export function OpportunityForm({
 	initialData,
 	onSubmit,
 	submitLabel,
+	opportunityType,
+	onChangeType,
 }: OpportunityFormProps) {
 	const { errors, setErrors, clear } = useFormErrors<string>();
 	const [loading, setLoading] = useState(false);
@@ -114,8 +121,12 @@ export function OpportunityForm({
 	const [images, setImages] = useState<OpportunityImage[]>(
 		initialData?.images ?? [],
 	);
+	const lockedType =
+		opportunityType ?? initialData?.opportunity_type ?? "comercializacao";
 	const [formValues, setFormValues] = useState<OpportunityFormValues>(
-		initialData ? opportunityToFormValues(initialData) : defaultValues,
+		initialData
+			? { ...opportunityToFormValues(initialData), opportunity_type: lockedType }
+			: { ...defaultValues, opportunity_type: lockedType },
 	);
 
 	useEffect(() => {
@@ -140,10 +151,23 @@ export function OpportunityForm({
 
 	useEffect(() => {
 		if (initialData) {
-			setFormValues(opportunityToFormValues(initialData));
+			setFormValues({
+				...opportunityToFormValues(initialData),
+				opportunity_type: opportunityType ?? initialData.opportunity_type,
+			});
 			setImages(initialData.images);
 		}
-	}, [initialData]);
+	}, [initialData, opportunityType]);
+
+	useEffect(() => {
+		if (opportunityType) {
+			setFormValues((prev) =>
+				prev.opportunity_type === opportunityType
+					? prev
+					: { ...prev, opportunity_type: opportunityType },
+			);
+		}
+	}, [opportunityType]);
 
 	function updateField<K extends keyof OpportunityFormValues>(
 		key: K,
@@ -271,43 +295,25 @@ export function OpportunityForm({
 					/>
 				</FormField>
 
-				<div className="grid gap-4 sm:grid-cols-2">
-					<FormField
-						id="opportunity_type"
-						label="Tipo da oportunidade"
-						error={errors.opportunity_type}
-					>
-						<Select
-							id="opportunity_type"
-							value={formValues.opportunity_type}
-							onChange={(e) =>
-								updateField(
-									"opportunity_type",
-									e.target.value as OpportunityFormValues["opportunity_type"],
-								)
-							}
-							aria-invalid={!!errors.opportunity_type}
-						>
-							{OPPORTUNITY_TYPES.map((type) => (
-								<option key={type.value} value={type.value}>
-									{type.label}
-								</option>
-							))}
-						</Select>
-						<p className="text-muted-foreground text-xs">
-							{
-								OPPORTUNITY_TYPES.find(
-									(t) => t.value === formValues.opportunity_type,
-								)?.description
-							}
+				<div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/80 bg-muted/30 px-4 py-3">
+					<div className="space-y-1">
+						<p className="font-medium text-muted-foreground text-xs">
+							Tipo da oportunidade
 						</p>
-					</FormField>
+						<OpportunityTypeBadge type={formValues.opportunity_type} />
+					</div>
+					{mode === "create" && onChangeType ? (
+						<Button type="button" variant="ghost" size="sm" onClick={onChangeType}>
+							Alterar tipo
+						</Button>
+					) : null}
+				</div>
 
-					<FormField
-						id="offer_demand"
-						label="Oferta ou demanda"
-						error={errors.offer_demand}
-					>
+				<FormField
+					id="offer_demand"
+					label="Oferta ou demanda"
+					error={errors.offer_demand}
+				>
 						<Select
 							id="offer_demand"
 							value={formValues.offer_demand}
@@ -325,8 +331,7 @@ export function OpportunityForm({
 								</option>
 							))}
 						</Select>
-					</FormField>
-				</div>
+				</FormField>
 			</section>
 
 			<section className="space-y-4">

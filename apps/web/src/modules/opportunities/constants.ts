@@ -14,20 +14,17 @@ export const OPPORTUNITY_TYPES: {
 	{
 		value: "comercializacao",
 		label: "Comercialização",
-		description:
-			"Compra ou venda pontual de resíduos, matérias-primas ou subprodutos.",
+		description: "Venda e compra pontual de resíduos.",
 	},
 	{
 		value: "simbiose_industrial",
 		label: "Simbiose Industrial",
-		description:
-			"Conexão contínua entre empresas para troca permanente de materiais ou recursos.",
+		description: "Conexão de fluxos contínuos.",
 	},
 	{
 		value: "compartilhamento",
 		label: "Compartilhamento",
-		description:
-			"Compartilhamento ou aluguel de ativos físicos (máquinas, equipamentos, espaços).",
+		description: "Aluguel de ativos e espaços.",
 	},
 ];
 
@@ -145,6 +142,41 @@ export const OPPORTUNITY_TYPE_LABELS: Record<OpportunityType, string> = {
 	comercializacao: "Comercialização",
 	simbiose_industrial: "Simbiose Industrial",
 	compartilhamento: "Compartilhamento",
+};
+
+export const OPPORTUNITY_TYPE_VISUAL: Record<
+	OpportunityType,
+	{
+		cardSelected: string;
+		iconWrapSelected: string;
+		iconClass: string;
+		badgeClass: string;
+	}
+> = {
+	comercializacao: {
+		cardSelected:
+			"border-emerald-600 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-950/40",
+		iconWrapSelected: "bg-emerald-600 text-white",
+		iconClass: "text-amber-500",
+		badgeClass:
+			"border-transparent bg-emerald-500/15 text-emerald-800 dark:text-emerald-300",
+	},
+	simbiose_industrial: {
+		cardSelected:
+			"border-sky-600 bg-sky-50 dark:border-sky-500 dark:bg-sky-950/40",
+		iconWrapSelected: "bg-sky-600 text-white",
+		iconClass: "text-sky-600 dark:text-sky-400",
+		badgeClass:
+			"border-transparent bg-sky-500/15 text-sky-800 dark:text-sky-300",
+	},
+	compartilhamento: {
+		cardSelected:
+			"border-amber-600 bg-amber-50 dark:border-amber-500 dark:bg-amber-950/40",
+		iconWrapSelected: "bg-amber-600 text-white",
+		iconClass: "text-amber-500",
+		badgeClass:
+			"border-transparent bg-amber-500/15 text-amber-800 dark:text-amber-300",
+	},
 };
 
 export const OFFER_DEMAND_LABELS: Record<OfferDemand, string> = {

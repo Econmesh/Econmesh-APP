@@ -200,10 +200,9 @@ export function ConversationDetailView({ conversationId }: ConversationDetailVie
     }
     setCreatingProposal(true);
     try {
-      const created = await contractProposalsService.create({
-        conversation_id: conversationId,
-        contract_type: "servico",
-      });
+                    const created = await contractProposalsService.create({
+                      conversation_id: conversationId,
+                    });
       toast.success("Minuta criada.");
       router.push(`/dashboard/minutas/${created.id}`);
     } catch (error) {

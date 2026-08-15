@@ -6,11 +6,11 @@ import type { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
+import { OpportunityTypeBadge } from "@/modules/opportunities/components/opportunity-type-badge";
 import {
 	MATCH_POTENTIAL_CARD_CLASSES,
 	MATCH_POTENTIAL_LABELS,
 	OFFER_DEMAND_LABELS,
-	OPPORTUNITY_TYPE_LABELS,
 } from "@/modules/opportunities/constants";
 import {
 	formatPriceDisplay,
@@ -84,9 +84,7 @@ export function OpportunityCard({
 						</div>
 					)}
 					<div className="absolute top-2 left-2 flex flex-wrap gap-1">
-						<Badge variant="info">
-							{OPPORTUNITY_TYPE_LABELS[opportunity.opportunity_type]}
-						</Badge>
+						<OpportunityTypeBadge type={opportunity.opportunity_type} />
 						<Badge
 							variant={
 								opportunity.offer_demand === "gerador" ? "success" : "warning"

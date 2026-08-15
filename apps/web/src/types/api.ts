@@ -744,6 +744,7 @@ export interface OpportunitySnapshot {
   price_negotiable: boolean;
   periodicity: string | null;
   prazo: string | null;
+  opportunity_type?: string | null;
 }
 
 export interface ProposalSection {
@@ -798,6 +799,7 @@ export interface ContractProposalListItem {
   title: string;
   status: ContractProposalStatus;
   contract_type: ContractType;
+  opportunity_type?: string | null;
   agreement_id: string | null;
   created_at: string;
   updated_at: string;
@@ -843,6 +845,7 @@ export interface ContractSectionTemplate {
   title: string;
   content_html: string;
   contract_type: ContractType | "oportunidades" | "todos";
+  opportunity_types?: OpportunityType[];
   sort_order: number;
   created_by: string;
   is_active: boolean;
