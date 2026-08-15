@@ -201,16 +201,21 @@ export interface OpportunityImage {
   sort_order: number;
 }
 
-export interface Opportunity {
+export interface OpportunityPreview {
   id: string;
-  company_id: string;
-  company_name: string;
-  owner_user_id: string;
   title: string;
-  description: string;
+  images: OpportunityImage[];
   opportunity_type: OpportunityType;
   offer_demand: OfferDemand;
   category: string;
+  locked?: boolean;
+}
+
+export interface Opportunity extends OpportunityPreview {
+  company_id: string;
+  company_name: string;
+  owner_user_id: string;
+  description: string;
   technical_detail: string;
   purity_percent: number | null;
   physical_state: string;
@@ -223,7 +228,6 @@ export interface Opportunity {
   state: string;
   latitude?: number | null;
   longitude?: number | null;
-  images: OpportunityImage[];
   created_at: string;
   updated_at: string;
   matching?: OpportunityMatch | null;
@@ -266,12 +270,13 @@ export interface OpportunityListParams {
 }
 
 export interface OpportunityListResponse {
-  items: Opportunity[];
+  items: Array<Opportunity | OpportunityPreview>;
   total: number;
   page: number;
   page_size: number;
   has_more: boolean;
   has_demands: boolean;
+  is_preview?: boolean;
 }
 
 export interface OpportunityCreatePayload {
@@ -919,6 +924,7 @@ export interface BillingMe {
   is_admin: boolean;
   company_id: string | null;
   subscription: BillingSubscription | null;
+  access_grant_expires_at?: string | null;
   trial_enabled: boolean;
   trial_days: number;
   allowed_billing_types: BillingType[];

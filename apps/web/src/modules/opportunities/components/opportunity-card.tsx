@@ -17,33 +17,43 @@ import {
 	formatQuantity,
 } from "@/modules/opportunities/schemas";
 import { getPrimaryImage } from "@/modules/opportunities/utils";
-import type { Opportunity } from "@/types/api";
+import type { Opportunity, OpportunityPreview } from "@/types/api";
 
 type OpportunityCardProps = {
-	opportunity: Opportunity;
+	opportunity: Opportunity | OpportunityPreview;
+	locked?: boolean;
 	hasDemands?: boolean;
 	onMatchClick?: (opportunity: Opportunity) => void;
 };
 
+function isFullOpportunity(
+	opportunity: Opportunity | OpportunityPreview,
+): opportunity is Opportunity {
+	return "company_name" in opportunity && "city" in opportunity;
+}
+
 export function OpportunityCard({
 	opportunity,
+	locked = false,
 	hasDemands = false,
 	onMatchClick,
 }: OpportunityCardProps) {
 	const imageUrl = getPrimaryImage(opportunity);
-	const matching = opportunity.matching;
-	const showMatchTag = hasDemands && matching != null;
+	const matching = isFullOpportunity(opportunity) ? opportunity.matching : undefined;
+	const showMatchTag = !locked && hasDemands && matching != null;
 
 	return (
 		<div className="group relative flex flex-col">
-			{showMatchTag && (
+			{showMatchTag && matching ? (
 				<button
 					type="button"
 					className={`absolute top-2 right-2 z-10 flex flex-col items-end gap-0.5 rounded-lg border px-2.5 py-1.5 text-left shadow-md transition-transform hover:scale-105 ${MATCH_POTENTIAL_CARD_CLASSES[matching.potential]}`}
 					onClick={(event) => {
 						event.preventDefault();
 						event.stopPropagation();
-						onMatchClick?.(opportunity);
+						if (isFullOpportunity(opportunity)) {
+							onMatchClick?.(opportunity);
+						}
 					}}
 				>
 					<span className="font-bold text-xs leading-none">
@@ -53,7 +63,7 @@ export function OpportunityCard({
 						{MATCH_POTENTIAL_LABELS[matching.potential]}
 					</span>
 				</button>
-			)}
+			) : null}
 
 			<Link
 				href={`/dashboard/oportunidades/${opportunity.id}` as Route}
@@ -97,35 +107,39 @@ export function OpportunityCard({
 						</p>
 					</div>
 
-					<div className="flex items-center gap-1 text-muted-foreground text-xs">
-						<MapPin className="size-3 shrink-0" aria-hidden />
-						<span className="truncate">
-							{opportunity.city}, {opportunity.state}
-						</span>
-					</div>
+					{!locked && isFullOpportunity(opportunity) ? (
+						<>
+							<div className="flex items-center gap-1 text-muted-foreground text-xs">
+								<MapPin className="size-3 shrink-0" aria-hidden />
+								<span className="truncate">
+									{opportunity.city}, {opportunity.state}
+								</span>
+							</div>
 
-					<div className="flex items-center gap-1 text-muted-foreground text-xs">
-						<Building2 className="size-3 shrink-0" aria-hidden />
-						<span className="truncate">{opportunity.company_name}</span>
-					</div>
+							<div className="flex items-center gap-1 text-muted-foreground text-xs">
+								<Building2 className="size-3 shrink-0" aria-hidden />
+								<span className="truncate">{opportunity.company_name}</span>
+							</div>
 
-					<div className="mt-auto flex items-end justify-between gap-2 pt-2">
-						<div>
-							<p className="text-muted-foreground text-xs">Quantidade</p>
-							<p className="font-medium text-sm">
-								{formatQuantity(opportunity.quantity, opportunity.unit)}
-							</p>
-						</div>
-						<div className="text-right">
-							<p className="text-muted-foreground text-xs">Valor</p>
-							<p className="font-semibold text-primary text-sm">
-								{formatPriceDisplay(
-									opportunity.price,
-									opportunity.price_negotiable,
-								)}
-							</p>
-						</div>
-					</div>
+							<div className="mt-auto flex items-end justify-between gap-2 pt-2">
+								<div>
+									<p className="text-muted-foreground text-xs">Quantidade</p>
+									<p className="font-medium text-sm">
+										{formatQuantity(opportunity.quantity, opportunity.unit)}
+									</p>
+								</div>
+								<div className="text-right">
+									<p className="text-muted-foreground text-xs">Valor</p>
+									<p className="font-semibold text-primary text-sm">
+										{formatPriceDisplay(
+											opportunity.price,
+											opportunity.price_negotiable,
+										)}
+									</p>
+								</div>
+							</div>
+						</>
+					) : null}
 				</div>
 			</Link>
 		</div>

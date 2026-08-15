@@ -87,6 +87,12 @@ function AssinaturaContent() {
 
   const subscription = billing.subscription;
   const hasAccess = billing.has_access;
+  const paidAccess =
+    Boolean(hasAccess && subscription) &&
+    (subscription?.status === "trialing" ||
+      subscription?.status === "active" ||
+      subscription?.status === "past_due");
+  const grantExpiresAt = billing.access_grant_expires_at;
 
   return (
     <div className="space-y-6">
@@ -103,7 +109,15 @@ function AssinaturaContent() {
         </p>
       ) : null}
 
-      {hasAccess && subscription ? (
+      {hasAccess && grantExpiresAt && !paidAccess ? (
+        <p className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-sm">
+          Acesso excepcional até{" "}
+          {new Date(grantExpiresAt).toLocaleString("pt-BR")}. Você pode assinar um plano
+          a qualquer momento.
+        </p>
+      ) : null}
+
+      {paidAccess && subscription ? (
         <Card>
           <CardHeader>
             <CardTitle>{subscription.plan_name ?? "Plano atual"}</CardTitle>
@@ -142,7 +156,12 @@ function AssinaturaContent() {
       ) : (
         <Card>
           <CardContent className="pt-6">
-            <PlansCheckout billing={billing} plans={plans} onRefresh={load} />
+            <PlansCheckout
+              billing={billing}
+              plans={plans}
+              processing={checkoutState === "success" && !hasAccess}
+              onRefresh={load}
+            />
           </CardContent>
         </Card>
       )}

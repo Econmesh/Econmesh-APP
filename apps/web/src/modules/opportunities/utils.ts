@@ -1,10 +1,13 @@
 import type {
 	Opportunity,
 	OpportunityListParams,
+	OpportunityPreview,
 	OpportunitySort,
 } from "@/types/api";
 
-export function getPrimaryImage(opportunity: Opportunity): string | null {
+export function getPrimaryImage(
+	opportunity: Pick<OpportunityPreview, "images">,
+): string | null {
 	const primary = opportunity.images.find((img) => img.is_primary);
 	if (primary) return primary.url;
 	return opportunity.images[0]?.url ?? null;

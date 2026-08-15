@@ -22,6 +22,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/hooks/use-auth";
+import { useBilling } from "@/hooks/use-billing";
+import { SubscriptionNudgeBanner } from "@/modules/billing/components/subscription-nudge-banner";
+import { SubscriptionNudgeDialog } from "@/modules/billing/components/subscription-nudge-dialog";
 import {
   ActivityLineCard,
   FunnelChartCard,
@@ -41,9 +44,12 @@ const ACTION_KIND_LABEL: Record<string, string> = {
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { hasAccess, loading: billingLoading } = useBilling();
   const [data, setData] = useState<UserDashboardResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [nudgeOpen, setNudgeOpen] = useState(true);
+  const showNudge = !billingLoading && !hasAccess;
 
   useEffect(() => {
     let cancelled = false;
@@ -78,6 +84,11 @@ export default function DashboardPage() {
           acordos.
         </p>
       </div>
+
+      {showNudge ? <SubscriptionNudgeBanner /> : null}
+      {showNudge && nudgeOpen ? (
+        <SubscriptionNudgeDialog onClose={() => setNudgeOpen(false)} />
+      ) : null}
 
       {error ? (
         <Card>

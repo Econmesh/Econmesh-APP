@@ -2,12 +2,13 @@
 
 import { Button } from "@econmesh-app/ui/components/button";
 import { Input } from "@econmesh-app/ui/components/input";
-import { Filter, Plus, Search } from "lucide-react";
+import { CreditCard, Filter, Plus, Search } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { useBilling } from "@/hooks/use-billing";
 import { OpportunityFilters } from "@/modules/opportunities/components/opportunity-filters";
 import { OpportunityList } from "@/modules/opportunities/components/opportunity-list";
 import { useDebouncedValue } from "@/modules/opportunities/hooks/use-debounced-value";
@@ -19,6 +20,7 @@ const DEFAULT_FILTERS: OpportunityListParams = {
 };
 
 export default function OportunidadesPage() {
+  const { hasAccess } = useBilling();
   const [filters, setFilters] = useState<OpportunityListParams>(DEFAULT_FILTERS);
   const [search, setSearch] = useState("");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -29,8 +31,10 @@ export default function OportunidadesPage() {
     [filters, debouncedSearch],
   );
 
-  const { opportunities, loading, loadingMore, hasMore, hasDemands, total, loadMore, error } =
+  const { opportunities, loading, loadingMore, hasMore, hasDemands, isPreview, total, loadMore, error } =
     useOpportunities(queryParams);
+
+  const locked = !hasAccess || isPreview;
 
   useEffect(() => {
     if (error) toast.error(error);
@@ -51,12 +55,21 @@ export default function OportunidadesPage() {
             compartilhados.
           </p>
         </div>
-        <Link href={"/dashboard/oportunidades/nova" as Route} className="inline-flex">
-          <Button>
-            <Plus className="size-4" aria-hidden />
-            Publicar oportunidade
-          </Button>
-        </Link>
+        {locked ? (
+          <Link href={"/dashboard/assinatura" as Route} className="inline-flex">
+            <Button>
+              <CreditCard className="size-4" aria-hidden />
+              Assine para publicar
+            </Button>
+          </Link>
+        ) : (
+          <Link href={"/dashboard/oportunidades/nova" as Route} className="inline-flex">
+            <Button>
+              <Plus className="size-4" aria-hidden />
+              Publicar oportunidade
+            </Button>
+          </Link>
+        )}
       </div>
 
       <div className="relative">
@@ -99,6 +112,7 @@ export default function OportunidadesPage() {
             loadingMore={loadingMore}
             hasMore={hasMore}
             hasDemands={hasDemands}
+            locked={locked}
             total={total}
             onLoadMore={loadMore}
           />
