@@ -4,12 +4,14 @@ import { OpportunityForm } from "@/modules/opportunities/components/opportunity-
 import type { OpportunityType } from "@/types/api";
 import type { ComponentProps } from "react";
 
-type SharedProps = Omit<
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
+	? Omit<T, K>
+	: never;
+
+type SharedProps = DistributiveOmit<
 	ComponentProps<typeof OpportunityForm>,
 	"opportunityType"
-> & {
-	onChangeType?: () => void;
-};
+>;
 
 function ComercializacaoOpportunityForm(props: SharedProps) {
 	return <OpportunityForm {...props} opportunityType="comercializacao" />;
