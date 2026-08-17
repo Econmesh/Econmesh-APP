@@ -15,6 +15,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { ProfileGateDialog } from "@/modules/acordos/components/profile-gate-dialog";
 import {
 	AGREEMENT_STATUS_CLASSES,
 	AGREEMENT_STATUS_LABELS,
@@ -41,6 +42,7 @@ export default function AcordoDetailPage() {
 	const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
 	const [progress, setProgress] = useState<AgreementProgress | null>(null);
 	const [loading, setLoading] = useState(true);
+	const [missing, setMissing] = useState<string[] | null>(null);
 
 	async function load() {
 		setLoading(true);
@@ -100,7 +102,12 @@ export default function AcordoDetailPage() {
 			toast.success("Acordo enviado.");
 			await load();
 		} catch (err) {
-			toast.error(err instanceof ApiError ? err.message : "Falha ao enviar.");
+			if (err instanceof ApiError && err.code === "profile_incomplete") {
+				const details = err.details as { missing?: string[] } | null;
+				setMissing(details?.missing ?? []);
+			} else {
+				toast.error(err instanceof ApiError ? err.message : "Falha ao enviar.");
+			}
 		}
 	}
 
@@ -318,6 +325,13 @@ export default function AcordoDetailPage() {
 					) : null}
 				</ol>
 			</section>
+			{missing && missing.length > 0 ? (
+				<ProfileGateDialog
+					missing={missing}
+					companyId={agreement.company_id}
+					onClose={() => setMissing(null)}
+				/>
+			) : null}
 		</div>
 	);
 }

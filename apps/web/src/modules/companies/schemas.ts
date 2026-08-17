@@ -79,6 +79,7 @@ export const companyUpdateSchema = z.object({
 export type CompanyDocumentFiles = {
   operating_license?: File | null;
   mtr?: File | null;
+  signature_authorization?: File | null;
 };
 
 export const BRAZILIAN_STATES = [

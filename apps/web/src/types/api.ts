@@ -69,6 +69,8 @@ export interface CompanyComplianceFile {
   reviewed_by?: string | null;
 }
 
+export type CompanyDocumentKind = "operating_license" | "mtr" | "signature_authorization";
+
 export interface Company {
   id: string;
   owner_user_id: string;
@@ -87,6 +89,7 @@ export interface Company {
   sector?: string | null;
   operating_license?: CompanyComplianceFile | null;
   mtr_document?: CompanyComplianceFile | null;
+  signature_authorization?: CompanyComplianceFile | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -172,6 +175,49 @@ export interface UserProfileUpdatePayload {
   country?: string;
   picture_storage_key?: string | null;
   picture_url?: string | null;
+}
+
+export type VisualSignatureKind = "signature" | "initials";
+export type VisualSignatureSource = "manual" | "automatic";
+
+export interface VisualSignatureFont {
+  id: string;
+  name: string;
+}
+
+export interface VisualSignatureInitialsOption {
+  id: string;
+  label: string;
+  text: string;
+}
+
+export interface VisualSignature {
+  id: string;
+  kind: VisualSignatureKind;
+  source: VisualSignatureSource;
+  font_id: string | null;
+  source_text: string;
+  sha256: string;
+  width: number;
+  height: number;
+  generation_version: string;
+  created_at: string;
+}
+
+export interface VisualSignaturesBundle {
+  signature: VisualSignature | null;
+  initials: VisualSignature | null;
+}
+
+export interface VisualSignaturePreview {
+  unique: boolean;
+  kind: VisualSignatureKind;
+  font_id: string;
+  source_text: string;
+  image_base64: string;
+  content_type: string;
+  width: number;
+  height: number;
 }
 
 export interface AvatarPresignResponse {
@@ -705,6 +751,12 @@ export interface CompanySearchItem {
 export interface EligibilityResponse {
   eligible: boolean;
   missing: string[];
+}
+
+export interface PlatformSettings {
+  id: string;
+  require_signature_authorization: boolean;
+  updated_at: string;
 }
 
 export interface DownloadUrlResponse {
