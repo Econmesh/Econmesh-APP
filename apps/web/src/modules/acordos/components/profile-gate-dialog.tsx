@@ -6,6 +6,8 @@ import Link from "next/link";
 
 import { MISSING_FIELD_LABELS } from "@/modules/acordos/constants";
 
+const SIGNATURE_AUTHORIZATION_FIELD = "company.signature_authorization";
+
 type ProfileGateDialogProps = {
 	missing: string[];
 	companyId?: string | null;
@@ -17,10 +19,17 @@ export function ProfileGateDialog({
 	companyId,
 	onClose,
 }: ProfileGateDialogProps) {
-	const hasCompany = missing.some((m) => m.startsWith("company."));
-	const editHref = hasCompany && companyId
-		? (`/dashboard/empresas/${companyId}/editar` as Route)
-		: ("/profile" as Route);
+	const hasAuthorization = missing.includes(SIGNATURE_AUTHORIZATION_FIELD);
+	const hasOtherCompany = missing.some(
+		(field) => field.startsWith("company.") && field !== SIGNATURE_AUTHORIZATION_FIELD,
+	);
+	const companyHref =
+		hasOtherCompany && companyId
+			? (`/dashboard/empresas/${companyId}/editar` as Route)
+			: null;
+	const profileHref = "/profile" as Route;
+	const primaryHref = companyHref ?? profileHref;
+	const primaryLabel = companyHref ? "Completar empresa" : "Completar perfil";
 
 	return (
 		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -29,6 +38,9 @@ export function ProfileGateDialog({
 					<h2 className="text-lg font-semibold">Perfil incompleto</h2>
 					<p className="mt-1 text-sm text-muted-foreground">
 						Complete os dados abaixo para criar, enviar ou assinar acordos.
+						{hasAuthorization
+							? " O documento de autorização de assinatura precisa ser enviado e aprovado."
+							: ""}
 					</p>
 				</div>
 				<ul className="list-disc space-y-1 pl-5 text-sm">
@@ -44,8 +56,15 @@ export function ProfileGateDialog({
 							Fechar
 						</Button>
 					) : null}
-					<Link href={editHref}>
-						<Button type="button">Completar perfil</Button>
+					{companyHref && hasAuthorization ? (
+						<Link href={profileHref}>
+							<Button type="button" variant="outline">
+								Enviar documento
+							</Button>
+						</Link>
+					) : null}
+					<Link href={primaryHref}>
+						<Button type="button">{primaryLabel}</Button>
 					</Link>
 				</div>
 			</div>

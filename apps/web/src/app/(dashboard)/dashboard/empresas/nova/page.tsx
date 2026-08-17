@@ -36,6 +36,13 @@ export default function NovaEmpresaPage() {
             files.operating_license,
           );
           await companiesService.uploadDocument(company.id, "mtr", files.mtr);
+          if (files.signature_authorization) {
+            await companiesService.uploadDocument(
+              company.id,
+              "signature_authorization",
+              files.signature_authorization,
+            );
+          }
           toast.success("Empresa cadastrada com sucesso.");
           router.push("/dashboard/empresas");
         }}

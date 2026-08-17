@@ -14,21 +14,48 @@ import { toast } from "sonner";
 
 import { ProfileForm } from "@/modules/profile/components/profile-form";
 import { ProfileView } from "@/modules/profile/components/profile-view";
+import {
+  SignatureAuthorizationCard,
+  isSignatureAuthorizationApproved,
+} from "@/modules/profile/components/signature-authorization-card";
+import { VisualSignatureCard } from "@/modules/profile/components/visual-signature-card";
+import { companiesService } from "@/services/companies/companies.service";
+import { platformSettingsService } from "@/services/platform/platform-settings.service";
 import { profileService } from "@/services/profile/profile.service";
-import type { UserProfile, UserProfileUpdatePayload } from "@/types/api";
+import { visualSignaturesService } from "@/services/profile/visual-signatures.service";
+import type {
+  Company,
+  UserProfile,
+  UserProfileUpdatePayload,
+  VisualSignaturesBundle,
+} from "@/types/api";
 import { useAuth } from "@/hooks/use-auth";
 
 export default function ProfilePage() {
   const { user, refreshProfile } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [company, setCompany] = useState<Company | null>(null);
+  const [requireAuthorization, setRequireAuthorization] = useState(false);
+  const [visualSignatures, setVisualSignatures] = useState<VisualSignaturesBundle>({
+    signature: null,
+    initials: null,
+  });
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
 
   const loadProfile = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await profileService.get();
+      const [data, companies, settings, signatures] = await Promise.all([
+        profileService.get(),
+        companiesService.list({ page: 1, page_size: 1 }),
+        platformSettingsService.get().catch(() => null),
+        visualSignaturesService.list().catch(() => ({ signature: null, initials: null })),
+      ]);
       setProfile(data);
+      setCompany(companies[0] ?? null);
+      setRequireAuthorization(Boolean(settings?.require_signature_authorization));
+      setVisualSignatures(signatures);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Não foi possível carregar o perfil.");
     } finally {
@@ -57,6 +84,11 @@ export default function ProfilePage() {
       </div>
     );
   }
+
+  const authorizationIncomplete =
+    Boolean(company) &&
+    requireAuthorization &&
+    !isSignatureAuthorizationApproved(company?.signature_authorization);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -96,6 +128,18 @@ export default function ProfilePage() {
         </Card>
       ) : null}
 
+      {authorizationIncomplete ? (
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Documento de autorização pendente</CardTitle>
+            <CardDescription>
+              O envio e a aprovação do documento de autorização de assinatura são obrigatórios
+              para criar, enviar ou assinar acordos.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      ) : null}
+
       {editing ? (
         <ProfileForm
           initialData={profile}
@@ -107,6 +151,29 @@ export default function ProfilePage() {
       ) : (
         <ProfileView profile={profile} />
       )}
+
+      <VisualSignatureCard
+        kind="signature"
+        artifact={visualSignatures.signature}
+        onCreated={(artifact) =>
+          setVisualSignatures((prev) => ({ ...prev, signature: artifact }))
+        }
+      />
+      <VisualSignatureCard
+        kind="initials"
+        artifact={visualSignatures.initials}
+        onCreated={(artifact) =>
+          setVisualSignatures((prev) => ({ ...prev, initials: artifact }))
+        }
+      />
+
+      {company ? (
+        <SignatureAuthorizationCard
+          company={company}
+          required={requireAuthorization}
+          onUpdated={setCompany}
+        />
+      ) : null}
     </div>
   );
 }

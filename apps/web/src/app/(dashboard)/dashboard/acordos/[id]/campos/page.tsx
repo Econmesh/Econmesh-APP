@@ -15,6 +15,7 @@ import {
 } from "react";
 import { toast } from "sonner";
 
+import { ProfileGateDialog } from "@/modules/acordos/components/profile-gate-dialog";
 import {
 	FIELD_TYPE_LABELS,
 	PARTICIPANT_ROLE_COLORS,
@@ -61,6 +62,7 @@ export default function AcordoCamposPage() {
 	const [sending, setSending] = useState(false);
 	const [loadingPdf, setLoadingPdf] = useState(false);
 	const [pdfError, setPdfError] = useState<string | null>(null);
+	const [missing, setMissing] = useState<string[] | null>(null);
 
 	const renderAllPages = useCallback(async () => {
 		const pdf = pdfDocRef.current;
@@ -305,9 +307,14 @@ export default function AcordoCamposPage() {
 			toast.success("Acordo enviado para assinatura.");
 			router.push(`/dashboard/acordos/${agreementId}` as Route);
 		} catch (err) {
-			toast.error(
-				err instanceof ApiError ? err.message : "Falha ao enviar acordo.",
-			);
+			if (err instanceof ApiError && err.code === "profile_incomplete") {
+				const details = err.details as { missing?: string[] } | null;
+				setMissing(details?.missing ?? []);
+			} else {
+				toast.error(
+					err instanceof ApiError ? err.message : "Falha ao enviar acordo.",
+				);
+			}
 		} finally {
 			setSending(false);
 		}
@@ -530,6 +537,13 @@ export default function AcordoCamposPage() {
 					) : null}
 				</div>
 			</div>
+			{missing && missing.length > 0 ? (
+				<ProfileGateDialog
+					missing={missing}
+					companyId={agreement?.company_id}
+					onClose={() => setMissing(null)}
+				/>
+			) : null}
 		</div>
 	);
 }

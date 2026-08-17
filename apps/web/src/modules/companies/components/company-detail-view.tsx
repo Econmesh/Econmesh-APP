@@ -25,7 +25,7 @@ import {
   isAllowedComplianceFile,
 } from "@/modules/companies/schemas";
 import { companiesService } from "@/services/companies/companies.service";
-import type { Company, CompanyComplianceFile } from "@/types/api";
+import type { Company, CompanyComplianceFile, CompanyDocumentKind } from "@/types/api";
 import { ApiError } from "@/utils/errors";
 
 type CompanyDetailViewProps = {
@@ -51,7 +51,7 @@ function DocumentItem({
   onUpdated,
 }: {
   companyId: string;
-  kind: "operating_license" | "mtr";
+  kind: CompanyDocumentKind;
   label: string;
   file?: CompanyComplianceFile | null;
   onUpdated?: (company: Company) => void;
@@ -231,7 +231,9 @@ export function CompanyDetailView({ company, onUpdated }: CompanyDetailViewProps
           <Card className="rounded-xl lg:col-span-2">
             <CardHeader>
               <CardTitle>Documentos</CardTitle>
-              <CardDescription>Licença de operação e comprovante MTR.</CardDescription>
+              <CardDescription>
+                Licença de operação, comprovante MTR e autorização de assinatura.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <dl className="grid gap-4 sm:grid-cols-2">
@@ -247,6 +249,13 @@ export function CompanyDetailView({ company, onUpdated }: CompanyDetailViewProps
                   kind="mtr"
                   label="MTR"
                   file={company.mtr_document}
+                  onUpdated={onUpdated}
+                />
+                <DocumentItem
+                  companyId={company.id}
+                  kind="signature_authorization"
+                  label="Autorização de assinatura"
+                  file={company.signature_authorization}
                   onUpdated={onUpdated}
                 />
               </dl>

@@ -14,10 +14,16 @@ import {
 	FIELD_TYPE_LABELS,
 	formatAgreementDate,
 } from "@/modules/acordos/constants";
+import { VisualSignatureCard } from "@/modules/profile/components/visual-signature-card";
 import { useAuth } from "@/hooks/use-auth";
 import { agreementsService } from "@/services/acordos/acordos.service";
+import { visualSignaturesService } from "@/services/profile/visual-signatures.service";
 import { ApiError } from "@/utils/errors";
-import type { Agreement, AgreementField } from "@/types/api";
+import type {
+	Agreement,
+	AgreementField,
+	VisualSignaturesBundle,
+} from "@/types/api";
 
 export default function AssinarAcordoPage() {
 	const params = useParams<{ id: string }>();
@@ -25,10 +31,13 @@ export default function AssinarAcordoPage() {
 	const { user } = useAuth();
 	const [agreement, setAgreement] = useState<Agreement | null>(null);
 	const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
-	const [signatureData, setSignatureData] = useState("");
 	const [rejectReason, setRejectReason] = useState("");
 	const [submitting, setSubmitting] = useState(false);
 	const [missing, setMissing] = useState<string[] | null>(null);
+	const [visualSignatures, setVisualSignatures] = useState<VisualSignaturesBundle>({
+		signature: null,
+		initials: null,
+	});
 
 	useEffect(() => {
 		void agreementsService.get(params.id).then((doc) => {
@@ -37,6 +46,9 @@ export default function AssinarAcordoPage() {
 		});
 		void agreementsService.eligibility().then((res) => {
 			if (!res.eligible) setMissing(res.missing);
+		});
+		void visualSignaturesService.list().then(setVisualSignatures).catch(() => {
+			setVisualSignatures({ signature: null, initials: null });
 		});
 	}, [params.id]);
 
@@ -49,12 +61,25 @@ export default function AssinarAcordoPage() {
 		return agreement.fields.filter((f) => f.participant_id === me.id);
 	}, [agreement, user?.email]);
 
+	const needsSignature = myFields.some((field) => field.field_type === "signature");
+	const needsInitials = myFields.some((field) => field.field_type === "initials");
+	const otherFields = myFields.filter(
+		(field) => field.field_type !== "signature" && field.field_type !== "initials",
+	);
+
 	async function sign() {
+		if (needsSignature && !visualSignatures.signature) {
+			toast.error("Crie sua assinatura visual antes de concluir.");
+			return;
+		}
+		if (needsInitials && !visualSignatures.initials) {
+			toast.error("Crie sua rúbrica antes de concluir.");
+			return;
+		}
 		setSubmitting(true);
 		try {
 			await agreementsService.sign(params.id, {
 				field_values: fieldValues,
-				signature_data: signatureData || undefined,
 			});
 			toast.success("Assinatura registrada.");
 			router.push(`/dashboard/acordos/${params.id}` as Route);
@@ -123,12 +148,32 @@ export default function AssinarAcordoPage() {
 
 			<section className="space-y-4 rounded-xl border bg-card/80 p-5">
 				<h2 className="font-semibold">Seus campos</h2>
+				{needsSignature ? (
+					<VisualSignatureCard
+						kind="signature"
+						artifact={visualSignatures.signature}
+						compact
+						onCreated={(artifact) =>
+							setVisualSignatures((prev) => ({ ...prev, signature: artifact }))
+						}
+					/>
+				) : null}
+				{needsInitials ? (
+					<VisualSignatureCard
+						kind="initials"
+						artifact={visualSignatures.initials}
+						compact
+						onCreated={(artifact) =>
+							setVisualSignatures((prev) => ({ ...prev, initials: artifact }))
+						}
+					/>
+				) : null}
 				{myFields.length === 0 ? (
 					<p className="text-sm text-muted-foreground">
 						Nenhum campo atribuído a você. Você ainda pode concluir sua etapa.
 					</p>
 				) : (
-					myFields.map((field) => (
+					otherFields.map((field) => (
 						<div key={field.id} className="space-y-1">
 							<Label>
 								{FIELD_TYPE_LABELS[field.field_type]} (pág. {field.page})
@@ -147,12 +192,6 @@ export default function AssinarAcordoPage() {
 									/>
 									Confirmar
 								</label>
-							) : field.field_type === "signature" ? (
-								<Input
-									placeholder="Digite seu nome completo como assinatura"
-									value={signatureData}
-									onChange={(e) => setSignatureData(e.target.value)}
-								/>
 							) : (
 								<Input
 									value={fieldValues[field.id] ?? ""}
@@ -195,6 +234,7 @@ export default function AssinarAcordoPage() {
 			{missing && missing.length > 0 ? (
 				<ProfileGateDialog
 					missing={missing}
+					companyId={agreement?.company_id}
 					onClose={() => setMissing(null)}
 				/>
 			) : null}

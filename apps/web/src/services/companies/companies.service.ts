@@ -2,6 +2,7 @@ import { api } from "@/services/api/client";
 import type {
   Company,
   CompanyCreatePayload,
+  CompanyDocumentKind,
   CompanyUpdatePayload,
   LogoPresignResponse,
   StorageUploadResponse,
@@ -56,7 +57,7 @@ export const companiesService = {
     };
   },
 
-  uploadDocument(companyId: string, kind: "operating_license" | "mtr", file: File) {
+  uploadDocument(companyId: string, kind: CompanyDocumentKind, file: File) {
     const formData = new FormData();
     formData.append("file", file);
     return api.upload<Company>(

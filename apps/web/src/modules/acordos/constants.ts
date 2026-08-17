@@ -106,6 +106,7 @@ export const MISSING_FIELD_LABELS: Record<string, string> = {
 	"company.address.state": "Estado da empresa",
 	"company.operating_license": "Licença de operação",
 	"company.mtr_document": "Comprovante MTR",
+	"company.signature_authorization": "Documento de autorização de assinatura",
 };
 
 export function formatAgreementDate(value: string): string {
