@@ -12,9 +12,11 @@ import { toast } from "sonner";
 
 import { CONTRACT_PROPOSAL_STATUS_LABELS } from "@/modules/minutas/constants";
 import { RichTextEditor } from "@/modules/minutas/components/rich-text-editor";
+import { BRAZILIAN_STATES } from "@/modules/companies/schemas";
 import { contractProposalsService } from "@/services/contract-proposals/contract-proposals.service";
 import type {
   ContractProposal,
+  ForoFillMode,
   PartySnapshot,
   ProposalSection,
 } from "@/types/api";
@@ -25,6 +27,11 @@ type MinutaDetailViewProps = {
 };
 
 type PartyDraft = Omit<PartySnapshot, "company_id">;
+
+function isForoSection(section: ProposalSection): boolean {
+  const title = section.title.trim().toLowerCase();
+  return title === "foro" || title === "do foro";
+}
 
 function partyToDraft(party: PartySnapshot): PartyDraft {
   const { company_id: _id, ...rest } = party;
@@ -43,6 +50,8 @@ export function MinutaDetailView({ proposalId }: MinutaDetailViewProps) {
   const [prazo, setPrazo] = useState("");
   const [price, setPrice] = useState("");
   const [sections, setSections] = useState<ProposalSection[]>([]);
+  const [foroCity, setForoCity] = useState("");
+  const [foroState, setForoState] = useState("");
   const [reasonOpen, setReasonOpen] = useState<"changes" | "reject" | null>(null);
   const [reasonText, setReasonText] = useState("");
   const [acting, setActing] = useState(false);
@@ -60,6 +69,8 @@ export function MinutaDetailView({ proposalId }: MinutaDetailViewProps) {
         data.opportunity.price != null ? String(data.opportunity.price) : "",
       );
       setSections([...data.sections].sort((a, b) => a.sort_order - b.sort_order));
+      setForoCity(data.foro_city ?? "");
+      setForoState(data.foro_state ?? "");
     } catch (error) {
       toast.error(
         error instanceof ApiError
@@ -81,6 +92,9 @@ export function MinutaDetailView({ proposalId }: MinutaDetailViewProps) {
 
   const canReview =
     proposal?.my_role === "interested" && proposal.status === "pending_approval";
+
+  const foroFillMode: ForoFillMode = proposal?.foro_fill_mode ?? "company";
+  const foroEditable = canEdit && foroFillMode === "company";
 
   async function handleSave(showToast = true) {
     if (!proposal || !contractor || !contracted) return;
@@ -105,9 +119,14 @@ export function MinutaDetailView({ proposalId }: MinutaDetailViewProps) {
           is_editable: section.is_editable,
           template_id: section.template_id,
         })),
+        ...(foroFillMode === "company"
+          ? { foro_city: foroCity || null, foro_state: foroState || null }
+          : {}),
       });
       setProposal(updated);
       setSections([...updated.sections].sort((a, b) => a.sort_order - b.sort_order));
+      setForoCity(updated.foro_city ?? "");
+      setForoState(updated.foro_state ?? "");
       if (showToast) toast.success("Minuta salva.");
     } catch (error) {
       toast.error(
@@ -211,19 +230,22 @@ export function MinutaDetailView({ proposalId }: MinutaDetailViewProps) {
   }
 
   function addSection() {
-    setSections((prev) => [
-      ...prev,
-      {
+    setSections((prev) => {
+      const foroIndex = prev.findIndex(isForoSection);
+      const insertAt = foroIndex === -1 ? prev.length : foroIndex;
+      const next = [...prev];
+      next.splice(insertAt, 0, {
         id: crypto.randomUUID(),
         title: "Nova seção",
         content_html: "<p></p>",
-        sort_order: prev.length,
+        sort_order: insertAt,
         is_core: false,
         is_admin_managed: false,
         is_editable: true,
         template_id: null,
-      },
-    ]);
+      });
+      return next.map((s, i) => ({ ...s, sort_order: i }));
+    });
   }
 
   if (loading) {
@@ -352,8 +374,9 @@ export function MinutaDetailView({ proposalId }: MinutaDetailViewProps) {
         </div>
 
         {sections.map((section, index) => {
+          const foro = isForoSection(section);
           const sectionEditable =
-            canEdit && !section.is_core && (section.is_editable ?? true);
+            canEdit && !section.is_core && !foro && (section.is_editable ?? true);
           return (
           <div
             key={section.id}
@@ -370,15 +393,15 @@ export function MinutaDetailView({ proposalId }: MinutaDetailViewProps) {
                 disabled={!sectionEditable}
                 className="max-w-md font-medium"
               />
-              {section.is_core ? (
+              {section.is_core || foro ? (
                 <Badge variant="secondary">Automática</Badge>
               ) : null}
-              {section.is_admin_managed ? (
+              {section.is_admin_managed && !foro ? (
                 <Badge variant="secondary">
                   {(section.is_editable ?? true) ? "Admin · editável" : "Admin · bloqueada"}
                 </Badge>
               ) : null}
-              {canEdit ? (
+              {canEdit && !foro ? (
                 <div className="ml-auto flex gap-1">
                   <Button
                     type="button"
@@ -397,7 +420,8 @@ export function MinutaDetailView({ proposalId }: MinutaDetailViewProps) {
                         disabled={
                           !sectionEditable ||
                           index === sections.length - 1 ||
-                          sections[index + 1]?.is_core
+                          sections[index + 1]?.is_core ||
+                          isForoSection(sections[index + 1])
                         }
                       >
                     <ArrowDown className="size-4" />
@@ -414,15 +438,28 @@ export function MinutaDetailView({ proposalId }: MinutaDetailViewProps) {
                 </div>
               ) : null}
             </div>
-            <RichTextEditor
-              value={section.content_html}
-              editable={sectionEditable}
-              onChange={(html) => {
-                const next = [...sections];
-                next[index] = { ...section, content_html: html };
-                setSections(next);
-              }}
-            />
+            {foro ? (
+              <ForoFields
+                city={foroCity}
+                state={foroState}
+                onCityChange={setForoCity}
+                onStateChange={setForoState}
+                editable={foroEditable}
+                contentHtml={section.content_html}
+                contractorName={contractor.legal_name}
+                contractedName={contracted.legal_name}
+              />
+            ) : (
+              <RichTextEditor
+                value={section.content_html}
+                editable={sectionEditable}
+                onChange={(html) => {
+                  const next = [...sections];
+                  next[index] = { ...section, content_html: html };
+                  setSections(next);
+                }}
+              />
+            )}
           </div>
           );
         })}
@@ -661,6 +698,76 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
+      />
+    </div>
+  );
+}
+
+const SELECT_CLASS =
+  "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none disabled:cursor-not-allowed disabled:opacity-50 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50";
+
+function ForoFields({
+  city,
+  state,
+  onCityChange,
+  onStateChange,
+  editable,
+  contentHtml,
+  contractorName,
+  contractedName,
+}: {
+  city: string;
+  state: string;
+  onCityChange: (value: string) => void;
+  onStateChange: (value: string) => void;
+  editable: boolean;
+  contentHtml: string;
+  contractorName: string;
+  contractedName: string;
+}) {
+  const cidade = city.trim() || "[cidade]";
+  const uf = state.trim() || "[UF]";
+  const preview = editable
+    ? `<p>As partes elegem o foro da Comarca de <strong>${cidade}</strong> - <strong>${uf}</strong>, para dirimir quaisquer dúvidas deste Instrumento, renunciando a qualquer outro por mais privilegiado que seja.</p><p>E, por estarem justas e contratadas, firmam o presente em 2 (duas) vias de igual teor, juntamente com 2 (duas) testemunhas.</p><p class="closing-date">${cidade}- ${uf}, [dia] de [mês] de [ano].</p><div class="signatures"><p class="signature">____________________________________<br/>${contractorName || "[razão social da contratante]"}</p><p class="signature-spacer"><br/><br/><br/><br/></p><p class="signature signature-next">____________________________________<br/>${contractedName || "[razão social da contratada]"}</p></div>`
+    : contentHtml;
+
+  return (
+    <div className="space-y-3">
+      <div className="grid gap-3 md:grid-cols-2">
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground">Cidade da comarca</label>
+          <Input
+            value={city}
+            onChange={(e) => onCityChange(e.target.value)}
+            disabled={!editable}
+            placeholder="Cidade"
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground">Estado</label>
+          <select
+            className={SELECT_CLASS}
+            value={state}
+            onChange={(e) => onStateChange(e.target.value)}
+            disabled={!editable}
+          >
+            <option value="">Selecione</option>
+            {BRAZILIAN_STATES.map((ufOption) => (
+              <option key={ufOption} value={ufOption}>
+                {ufOption}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+      {!editable ? (
+        <p className="text-xs text-muted-foreground">
+          A comarca é definida pelo administrador da plataforma.
+        </p>
+      ) : null}
+      <div
+        className="rounded-md border border-border bg-muted/20 p-3 text-sm leading-relaxed [&_p]:mb-2 last:[&_p]:mb-0 [&_.closing-date]:text-center [&_.signatures]:mt-4 [&_.signatures]:text-center [&_.signature]:mt-0 [&_.signature]:text-center [&_.signature-next]:mt-28"
+        dangerouslySetInnerHTML={{ __html: preview }}
       />
     </div>
   );

@@ -756,8 +756,13 @@ export interface EligibilityResponse {
 export interface PlatformSettings {
   id: string;
   require_signature_authorization: boolean;
+  foro_fill_mode?: ForoFillMode;
+  foro_city?: string | null;
+  foro_state?: string | null;
   updated_at: string;
 }
+
+export type ForoFillMode = "admin" | "company";
 
 export interface DownloadUrlResponse {
   url: string;
@@ -835,6 +840,9 @@ export interface ContractProposal {
   contracted: PartySnapshot;
   opportunity: OpportunitySnapshot;
   sections: ProposalSection[];
+  foro_city?: string | null;
+  foro_state?: string | null;
+  foro_fill_mode?: ForoFillMode;
   pdf_file: ProposalPdfFile | null;
   agreement_id: string | null;
   change_request_message: string | null;
@@ -885,6 +893,8 @@ export interface ContractProposalUpdatePayload {
     is_editable?: boolean;
     template_id?: string | null;
   }>;
+  foro_city?: string | null;
+  foro_state?: string | null;
 }
 
 export interface ApproveProposalResponse {
