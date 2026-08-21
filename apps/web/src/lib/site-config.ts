@@ -7,12 +7,12 @@ export const siteConfig = {
 		"Um ecossistema digital que mapeia, conecta e viabiliza fluxos de recursos (materiais, água, energia e serviços) entre diversas empresas, de forma inteligente e confiável.",
 	url: env.NEXT_PUBLIC_SITE_URL ?? "https://econmesh.com.br",
 	contact: {
-		email: "contato@econmesh.com.br",
+		email: "simbioseindustrial@econmesh.com.br",
 		phone: "+55 (11) 0000-0000",
 		location: "Recife - PE, Brasil",
 	},
 	newsletter: {
-		mailto: "contato@econmesh.com.br",
+		mailto: "simbioseindustrial@econmesh.com.br",
 		subject: "Newsletter ECONMESH — Novidades",
 	},
 	social: [
