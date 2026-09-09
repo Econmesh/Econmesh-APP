@@ -15,6 +15,8 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   invalid_verification_token: "Link de confirmação inválido.",
   verification_token_used: "Este link já foi utilizado.",
   verification_token_expired: "Link expirado. Solicite um novo e-mail.",
+  reset_code_expired: "Link expirado. Solicite um novo e-mail.",
+  reset_code_invalid: "Link inválido. Solicite uma nova recuperação de senha.",
   user_not_found: "Usuário não encontrado.",
   validation_error: "Verifique os campos do formulário.",
   rate_limited: "Muitas tentativas. Aguarde e tente novamente.",

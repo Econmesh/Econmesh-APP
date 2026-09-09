@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { signOut } from "firebase/auth";
 import { toast } from "sonner";
@@ -21,46 +21,20 @@ import { resetPasswordSchema } from "@/utils/validation";
 
 function ResetPasswordContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const { resetPassword } = useAuth();
   const oobCode = searchParams.get("oobCode");
   const mode = searchParams.get("mode");
   const [loading, setLoading] = useState(false);
-  const [verifying, setVerifying] = useState(!!oobCode);
-  const [verifyError, setVerifyError] = useState(false);
-  const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const { errors, setErrors, clear } = useFormErrors<"password" | "password_confirm">();
 
   const invalidMode = !!mode && mode !== "resetPassword";
 
   useEffect(() => {
     if (!oobCode || invalidMode) {
-      setVerifying(false);
       return;
     }
-
     void signOut(getFirebaseAuth());
     void fetch("/api/auth/session", { method: "DELETE" });
-
-    let cancelled = false;
-    void (async () => {
-      try {
-        const { verifyPasswordResetCode } = await import("firebase/auth");
-        const email = await verifyPasswordResetCode(getFirebaseAuth(), oobCode);
-        if (!cancelled) setAccountEmail(email);
-      } catch {
-        if (!cancelled) {
-          setVerifyError(true);
-          toast.error("Link inválido ou expirado. Solicite uma nova recuperação de senha.");
-        }
-      } finally {
-        if (!cancelled) setVerifying(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
   }, [oobCode, invalidMode]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -90,8 +64,9 @@ function ResetPasswordContent() {
     setLoading(true);
     try {
       await resetPassword(oobCode, parsed.data.password);
-      toast.success("Senha redefinida com sucesso!");
-      router.replace("/login");
+      toast.success("Senha redefinida. Entre com a nova senha.");
+      window.location.assign("/login");
+      return;
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Falha ao redefinir senha.");
     } finally {
@@ -99,7 +74,7 @@ function ResetPasswordContent() {
     }
   }
 
-  if (invalidMode || !oobCode || verifyError) {
+  if (invalidMode || !oobCode) {
     return (
       <AuthShell title="Link inválido" subtitle="Solicite um novo e-mail de recuperação">
         <p className="text-center text-sm text-muted-foreground">
@@ -111,22 +86,10 @@ function ResetPasswordContent() {
     );
   }
 
-  if (verifying) {
-    return (
-      <AuthShell title="Validando link" subtitle="Aguarde um momento">
-        <PageSkeleton />
-      </AuthShell>
-    );
-  }
-
   return (
     <AuthShell
       title="Nova senha"
-      subtitle={
-        accountEmail
-          ? `Defina uma nova senha para ${accountEmail}`
-          : "Defina uma senha forte para sua conta"
-      }
+      subtitle="Defina uma senha forte para sua conta"
     >
       <AuthForm onSubmit={handleSubmit} submitLabel="Salvar senha" loading={loading}>
         <FormField id="password" label="Nova senha" error={errors.password}>
