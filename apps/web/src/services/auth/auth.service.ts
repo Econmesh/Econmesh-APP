@@ -62,6 +62,26 @@ export const authService = {
     });
   },
 
+  forgotPassword(email: string, continueUrl: string) {
+    return api.post<MessageResponse>("/auth/forgot-password", {
+      email,
+      continue_url: continueUrl,
+    }, { skipAuthRedirect: true });
+  },
+
+  verifyPasswordReset(oobCode: string) {
+    return api.post<{ email: string }>("/auth/verify-password-reset", {
+      oob_code: oobCode,
+    }, { skipAuthRedirect: true });
+  },
+
+  confirmPasswordReset(oobCode: string, password: string) {
+    return api.post<MessageResponse>("/auth/confirm-password-reset", {
+      oob_code: oobCode,
+      password,
+    }, { skipAuthRedirect: true });
+  },
+
   me() {
     return api.get<MeUser>("/auth/me", { auth: true });
   },

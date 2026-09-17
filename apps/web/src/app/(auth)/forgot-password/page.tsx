@@ -34,7 +34,7 @@ export default function ForgotPasswordPage() {
     try {
       await sendPasswordReset(parsed.data.email);
       setSent(true);
-      toast.success("Se o e-mail existir, enviamos instruções de recuperação.");
+      toast.success("Se a conta existir, enviamos um e-mail com o link para redefinir a senha.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Falha ao enviar e-mail.");
     } finally {
@@ -53,7 +53,9 @@ export default function ForgotPasswordPage() {
     >
       {sent ? (
         <p className="rounded-xl border border-border bg-card/80 p-6 text-center text-sm text-muted-foreground">
-          Link enviado via Firebase Auth. Siga as instruções no e-mail.
+          Enviamos um e-mail com o link para redefinir sua senha. Confira a caixa de
+          entrada e o spam. Use apenas o e-mail mais recente — um novo pedido invalida
+          o link anterior.
         </p>
       ) : (
         <AuthForm onSubmit={handleSubmit} submitLabel="Enviar link" loading={loading}>

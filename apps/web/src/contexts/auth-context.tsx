@@ -1,9 +1,7 @@
 "use client";
 
 import {
-  confirmPasswordReset,
   onAuthStateChanged,
-  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
   type User as FirebaseUser,
@@ -217,28 +215,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const sendPasswordReset = useCallback(async (email: string) => {
-    try {
-      await sendPasswordResetEmail(getFirebaseAuth(), email, {
-        url: getPasswordResetActionUrl(),
-        handleCodeInApp: true,
-      });
-    } catch (error) {
-      if (error && typeof error === "object" && "code" in error) {
-        throw new Error(mapFirebaseError(String((error as { code: string }).code)));
-      }
-      throw error;
-    }
+    await authService.forgotPassword(email, getPasswordResetActionUrl());
   }, []);
 
   const resetPassword = useCallback(async (oobCode: string, password: string) => {
-    try {
-      await confirmPasswordReset(getFirebaseAuth(), oobCode, password);
-    } catch (error) {
-      if (error && typeof error === "object" && "code" in error) {
-        throw new Error(mapFirebaseError(String((error as { code: string }).code)));
-      }
-      throw error;
-    }
+    await authService.confirmPasswordReset(oobCode, password);
   }, []);
 
   const refreshProfile = useCallback(async () => {
